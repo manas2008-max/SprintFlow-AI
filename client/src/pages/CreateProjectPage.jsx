@@ -162,8 +162,24 @@ export default function CreateProjectPage() {
     e.preventDefault();
     setError('');
 
-    if (!name || !goal) {
-      setError('Please provide project name and primary goal.');
+    if (!name || name.trim().length < 2) {
+      setError('Project name is required');
+      return;
+    }
+    if (!goal || goal.trim().length < 5) {
+      setError('Project description is too short');
+      return;
+    }
+    if (Number(budget) < 1000) {
+      setError('Budget must be at least ₹1000');
+      return;
+    }
+    if (!teamMembers || teamMembers.length < 1) {
+      setError('Please add at least one team member');
+      return;
+    }
+    if (!deliverables || deliverables.length < 1) {
+      setError('Please add at least one expected deliverable');
       return;
     }
 

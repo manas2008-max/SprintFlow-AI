@@ -59,9 +59,9 @@ async function ensureUserExistsInSupabase(supabase, userId, reqUser) {
 const projectValidationSchema = z.object({
   name: z.string().min(2, 'Project name is required'),
   businessType: z.string().min(2, 'Business type is required'),
-  goal: z.string().min(5, 'Project goal must be descriptive'),
-  deadline: z.string().min(1, 'Deadline is required'),
-  budget: z.number().positive('Budget must be greater than zero'),
+  goal: z.string().min(5, 'Project description is too short'),
+  deadline: z.string().min(1, 'Target deadline is required'),
+  budget: z.number().min(1000, 'Budget must be at least ₹1000'),
   priority: z.enum(['Low', 'Medium', 'High', 'Critical']).default('High'),
   teamMembers: z.array(z.object({
     id: z.string().optional(),
@@ -69,8 +69,8 @@ const projectValidationSchema = z.object({
     role: z.string(),
     skills: z.array(z.string()),
     availability: z.number().optional()
-  })).optional(),
-  expectedDeliverables: z.array(z.string()).optional()
+  })).min(1, 'Please add at least one team member'),
+  expectedDeliverables: z.array(z.string()).min(1, 'Please add at least one expected deliverable')
 });
 
 const createProject = async (req, res) => {
@@ -82,11 +82,13 @@ const createProject = async (req, res) => {
   try {
     const parseResult = projectValidationSchema.safeParse(req.body);
     if (!parseResult.success) {
-      console.error('[CREATE_PROJECT] Validation Error:', parseResult.error.flatten().fieldErrors);
+      const fieldErrors = parseResult.error.flatten().fieldErrors;
+      const firstErrorMsg = Object.values(fieldErrors).flat()[0] || 'Invalid project payload';
+      console.error('[CREATE_PROJECT] Validation Error:', fieldErrors);
       return res.status(400).json({
         success: false,
-        message: 'Invalid project payload',
-        errors: parseResult.error.flatten().fieldErrors
+        message: firstErrorMsg,
+        errors: fieldErrors
       });
     }
 
