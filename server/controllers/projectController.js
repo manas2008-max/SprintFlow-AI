@@ -7,30 +7,51 @@ const memoryProjects = [];
 
 // Helper to ensure user exists in Supabase users table before inserting project
 async function ensureUserExistsInSupabase(supabase, userId, reqUser) {
-  const { data: user } = await supabase
-    .from('users')
-    .select('id')
-    .eq('id', userId)
-    .single();
+  try {
+    // 1. Check if user row exists by UUID
+    const { data: userById } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
 
-  if (user) return userId;
+    if (userById) return userId;
 
-  console.log(`[Database Auto-Sync] Creating user profile in Supabase for UUID: ${userId}...`);
-  const { data: newUser, error } = await supabase
-    .from('users')
-    .insert([{
-      id: userId,
-      name: reqUser?.name || 'User',
-      email: reqUser?.email || `user_${userId.substring(0, 8)}@sprintflow.ai`,
-      password_hash: 'managed_by_supabase_auth',
-      role: reqUser?.role || 'manager',
-      company_name: reqUser?.companyName || 'SprintFlow Enterprise'
-    }])
-    .select()
-    .single();
+    // 2. Check if user row exists by Email (to avoid unique constraint violation)
+    const cleanEmail = (reqUser?.email || '').toLowerCase().trim();
+    if (cleanEmail) {
+      const { data: userByEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
 
-  if (error) {
-    console.warn('[Database Auto-Sync Warning] Could not auto-insert user record:', error.message);
+      if (userByEmail) {
+        console.log(`[Database Auto-Sync] Updating existing profile for email '${cleanEmail}' to UUID '${userId}'...`);
+        // Delete old orphan row with mismatched ID and insert clean UUID record
+        await supabase.from('users').delete().eq('email', cleanEmail);
+      }
+    }
+
+    console.log(`[Database Auto-Sync] Creating user profile in Supabase for UUID: ${userId}...`);
+    const { data: newUser, error } = await supabase
+      .from('users')
+      .insert([{
+        id: userId,
+        name: reqUser?.name || 'User',
+        email: cleanEmail || `user_${userId.substring(0, 8)}@sprintflow.ai`,
+        password_hash: 'managed_by_supabase_auth',
+        role: reqUser?.role || 'manager',
+        company_name: reqUser?.companyName || 'SprintFlow Enterprise'
+      }])
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[Database Auto-Sync Warning] Could not auto-insert user record:', error.message);
+    }
+  } catch (err) {
+    console.error('[Database Auto-Sync Exception]', err.message);
   }
   return userId;
 }
