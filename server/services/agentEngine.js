@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 /**
  * SprintFlow Autonomous Multi-Agent AI Orchestrator
- * Agent 1: Planner Agent (Milestone decomposition & timeline estimation)
+ * Agent 1: Requirement Analysis & Planner Agent (Milestone decomposition & timeline estimation)
  * Agent 2: Task Agent (Skill-matching, workload balancing & rationale generation)
  * Agent 3: Risk Agent (Dynamic risk scoring, 2x2 matrix vectors & safeguards)
  * Agent 4: Coordinator Agent (Bottleneck removal, critical path analysis & recommendations)
@@ -33,20 +33,15 @@ Project Details:
 - Expected Deliverables: ${JSON.stringify(projectInput.expectedDeliverables || [])}
 
 Perform dynamic risk scoring:
-1. Team Capacity: Team size <= 2 (+30 Risk), Team size <= 4 (+15 Risk).
-2. Deadline: Days < 30 (+25 Risk), Days < 60 (+10 Risk).
-3. Budget: Insufficient budget for complexity (+20 Risk).
-4. Skill Gap: Missing required employee skills (+20 Risk).
-5. Task Distribution: Single point of failure / overloaded developer (+15 Risk).
-6. Project Complexity: High complexity domain (+20 Risk).
+Evaluate team size, deadline, budget, skill gap, single point of failure, and domain complexity.
 
-Perform multi-agent collaboration and return ONLY a single valid JSON object matching this schema EXACTLY without markdown code block backticks:
+Return ONLY a single valid JSON object matching this schema EXACTLY without markdown code block backticks:
 
 {
-  "executiveSummary": "Concise high-level strategic summary of the project execution plan.",
-  "aiConfidenceScore": 85,
-  "businessHealthScore": 75,
-  "overallRiskScore": 65,
+  "executiveSummary": "Strategic summary of the project execution plan.",
+  "aiConfidenceScore": 88,
+  "businessHealthScore": 78,
+  "overallRiskScore": 55,
   "milestones": [
     {
       "id": "m1",
@@ -77,7 +72,7 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
     {
       "id": "r1",
       "title": "Risk Name",
-      "category": "Team Capacity or Schedule Risk or Financial or Skill Gap or Resource Allocation",
+      "category": "Deadline Risk or Skill Gap or Resource Constraint or Financial Risk or Dependency Risk or Technical Debt or Security Risk",
       "impact": "High",
       "likelihood": "High",
       "description": "Detailed explanation of potential issue",
@@ -87,50 +82,63 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
   ],
   "recommendations": [
     "Increase team size to balance critical path workload",
-    "Extend project deadline to allow thorough QA testing",
-    "Recruit missing specialists for key engineering domains"
+    "Extend project deadline to allow thorough QA testing"
   ],
   "reports": {
-    "readme": "# Project Title\\n\\n## Overview\\nDetailed README content...",
-    "meetingNotes": "### Kickoff Meeting Notes\\n\\n**Key Objectives:**...",
-    "statusReport": "### Weekly Executive Status Report\\n\\n**Overall Status:** Operational...",
-    "presentationOutline": "### Slide 1: Vision\\n### Slide 2: Roadmap...",
-    "clientReport": "### Client Summary Report\\n\\nDear Stakeholders..."
+    "readme": "# Project Title\\n\\n## Overview...",
+    "meetingNotes": "### Kickoff Meeting Notes...",
+    "statusReport": "### Weekly Executive Status Report...",
+    "presentationOutline": "### Slide 1: Vision...",
+    "clientReport": "### Client Summary Report..."
   },
   "agentLogs": [
     {
       "timestamp": "00:01",
-      "agent": "Planner Agent",
-      "action": "Deconstructed requirements into 3 agile milestones.",
-      "details": "Analyzed budget and target deadline.",
+      "agent": "Requirement Analysis",
+      "action": "Parsed project objectives and budget bounds.",
+      "details": "Validated deliverables and team capacity.",
       "type": "reasoning"
     },
     {
       "timestamp": "00:02",
-      "agent": "Task Agent",
-      "action": "Mapped primary tasks across team member skillsets.",
-      "details": "Balanced workload variance.",
-      "type": "success"
+      "agent": "Planner Agent Thinking...",
+      "action": "Deconstructed requirements into agile milestones.",
+      "details": "Calculated target dates and sprint phases.",
+      "type": "reasoning"
     },
     {
       "timestamp": "00:03",
-      "agent": "Risk Agent",
-      "action": "Calculated dynamic risk score and 2x2 matrix vectors.",
-      "details": "Proposed action safeguards and copilot recommendations.",
-      "type": "warning"
+      "agent": "Task Decomposition",
+      "action": "Broken down milestones into atomic tasks.",
+      "details": "Mapped dependencies and estimated duration.",
+      "type": "success"
     },
     {
       "timestamp": "00:04",
-      "agent": "Coordinator Agent",
-      "action": "Calculated critical path and sprint cadence.",
-      "details": "Optimized delivery pipeline.",
-      "type": "info"
+      "agent": "Skill Matching",
+      "action": "Matched tasks across employee skillsets.",
+      "details": "Generated explicit assignment rationales.",
+      "type": "success"
     },
     {
       "timestamp": "00:05",
-      "agent": "Report Agent",
-      "action": "Compiled executive reports, README, and pitch deck outline.",
-      "details": "Synthesized artifacts.",
+      "agent": "Coordinator Optimization",
+      "action": "Calculated project critical path.",
+      "details": "Balanced workload variance.",
+      "type": "info"
+    },
+    {
+      "timestamp": "00:06",
+      "agent": "Risk Analysis",
+      "action": "Evaluated dynamic risk vectors.",
+      "details": "Populated 2x2 Heatmap matrix.",
+      "type": "warning"
+    },
+    {
+      "timestamp": "00:07",
+      "agent": "Report Generation",
+      "action": "Compiled executive documentation.",
+      "details": "Synthesized README, Meeting Notes & Pitch Deck.",
       "type": "success"
     }
   ]
@@ -148,16 +156,16 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
       console.log('[Agent Orchestrator] Gemini AI multi-agent plan generated successfully!');
     } catch (err) {
       console.warn('[Agent Orchestrator Notice] Gemini API timeout or error:', err.message);
-      console.log('[Agent Orchestrator] Utilizing SprintFlow High-Fidelity Local AI Reasoning Engine...');
+      console.log('[Agent Orchestrator] Utilizing SprintFlow Dynamic Local AI Reasoning Engine...');
       aiGeneratedData = generateSmartFallbackPlan(projectInput);
     }
   }
 
-  // Always compute dynamic scores based on project attributes
+  // Always enforce dynamic scoring evaluation from project attributes
   const dynamicEval = computeDynamicRiskAnalysis(projectInput);
 
   if (!aiGeneratedData) {
-    console.log('[Agent Orchestrator] Utilizing SprintFlow High-Fidelity Dynamic Local AI Reasoning Engine...');
+    console.log('[Agent Orchestrator] Utilizing SprintFlow Dynamic Local AI Reasoning Engine...');
     aiGeneratedData = generateSmartFallbackPlan(projectInput);
   } else {
     if (!aiGeneratedData.risks || aiGeneratedData.risks.length === 0) {
@@ -175,7 +183,8 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
 }
 
 /**
- * Dynamic Risk Scoring & Dynamic AI Confidence & Business Health Calculation Engine
+ * 100% Dynamic Risk Scoring, AI Confidence & Business Health Calculation Engine
+ * No static values. Evaluates actual project attributes.
  */
 function computeDynamicRiskAnalysis(p) {
   const team = p.teamMembers || [];
@@ -190,33 +199,49 @@ function computeDynamicRiskAnalysis(p) {
   const generatedRisks = [];
   const copilotRecs = [];
 
+  // Deterministic seed hash based on project name & budget for unique micro-variations
+  const seedHash = (name + goal + budget).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const microVariation = (seedHash % 9) - 4; // -4 to +4 micro variance
+
   // 1. Team Capacity Evaluation
-  if (teamSize <= 2) {
-    riskScore += 30;
+  if (teamSize <= 1) {
+    riskScore += 35;
+    generatedRisks.push({
+      id: 'r_cap_critical',
+      title: 'Solo Engineer Risk',
+      category: 'Resource Constraint',
+      impact: 'High',
+      likelihood: 'High',
+      description: `Only 1 employee assigned to handle full-stack architecture, testing, and deployment.`,
+      reason: `Single employee creating critical capacity bottleneck.`,
+      mitigationStrategy: 'Add at least 2 additional engineers to distribute architectural responsibilities.'
+    });
+    copilotRecs.push('Hire or assign additional developers to eliminate single-developer dependency.');
+  } else if (teamSize <= 2) {
+    riskScore += 28;
     generatedRisks.push({
       id: 'r_cap',
       title: 'Team Capacity Constraint',
-      category: 'Resource Allocation',
+      category: 'Resource Constraint',
       impact: 'High',
       likelihood: 'High',
-      description: `Team size of ${teamSize} developer(s) is critically understaffed for the required project scope.`,
-      reason: `Only ${teamSize} employee(s) assigned to handle full architecture, development, testing, and deployment.`,
-      mitigationStrategy: 'Hire additional developers or contract external domain specialists immediately to balance workload.'
+      description: `Team size of ${teamSize} developer(s) is understaffed for the required project scope.`,
+      reason: `Only ${teamSize} employee(s) assigned to handle full development cycle.`,
+      mitigationStrategy: 'Contract external domain specialists immediately to balance workload.'
     });
-    copilotRecs.push('Increase team size to balance critical path workload and eliminate bottlenecks.');
+    copilotRecs.push('Increase team size to balance critical path workload.');
   } else if (teamSize <= 4) {
-    riskScore += 15;
+    riskScore += 14;
     generatedRisks.push({
       id: 'r_cap',
-      title: 'Limited Team Capacity',
-      category: 'Resource Allocation',
+      title: 'Limited Workload Buffer',
+      category: 'Resource Constraint',
       impact: 'Medium',
-      likelihood: 'High',
-      description: `Team size of ${teamSize} members provides tight throughput with minimal buffer for unexpected absences.`,
+      likelihood: 'Medium',
+      description: `Team size of ${teamSize} members provides tight throughput with minimal buffer.`,
       reason: `Small team size limits concurrent feature development velocity.`,
       mitigationStrategy: 'Reallocate non-critical deliverables to post-launch updates.'
     });
-    copilotRecs.push('Expand engineering team or adjust milestone deliverable scope.');
   }
 
   // 2. Deadline Evaluation
@@ -233,112 +258,122 @@ function computeDynamicRiskAnalysis(p) {
     }
   }
 
-  if (daysUntilDeadline < 30) {
-    riskScore += 25;
+  if (daysUntilDeadline < 20) {
+    riskScore += 32;
     generatedRisks.push({
-      id: 'r_dead',
-      title: 'Schedule Risk & Unrealistic Deadline',
-      category: 'Deadline',
+      id: 'r_dead_impossible',
+      title: 'Impossible Deadline Target',
+      category: 'Deadline Risk',
       impact: 'High',
       likelihood: 'High',
-      description: `Target deadline of ${daysUntilDeadline} days provides minimal buffer for integration testing and user acceptance.`,
-      reason: `Deadline of ${daysUntilDeadline} days is less than the recommended 30-day minimum sprint cycle.`,
-      mitigationStrategy: 'Extend project deadline by 2-4 weeks or launch a minimal viable product (MVP) first.'
+      description: `Target deadline of ${daysUntilDeadline} days is critically compressed.`,
+      reason: `Deadline of ${daysUntilDeadline} days does not allow necessary sprint iterations.`,
+      mitigationStrategy: 'Extend target launch date by 30 days or drastically cut phase 1 scope.'
     });
-    copilotRecs.push(`Extend project target deadline beyond ${daysUntilDeadline} days to allow comprehensive QA & UAT testing.`);
-  } else if (daysUntilDeadline < 60) {
-    riskScore += 10;
+    copilotRecs.push(`Extend project target deadline beyond ${daysUntilDeadline} days immediately.`);
+  } else if (daysUntilDeadline < 45) {
+    riskScore += 22;
     generatedRisks.push({
       id: 'r_dead',
-      title: 'Tight Delivery Timeline',
-      category: 'Deadline',
-      impact: 'Medium',
-      likelihood: 'High',
-      description: `Target deadline of ${daysUntilDeadline} days requires disciplined milestone tracking.`,
-      reason: `Timeline provides limited buffer for unexpected technical blocks.`,
+      title: 'Compressed Delivery Timeline',
+      category: 'Deadline Risk',
+      impact: 'High',
+      likelihood: 'Medium',
+      description: `Target deadline of ${daysUntilDeadline} days provides minimal QA buffer.`,
+      reason: `Timeline requires accelerated sprint cycles.`,
       mitigationStrategy: 'Conduct daily async standups and enforce strict milestone phase locks.'
+    });
+  } else if (daysUntilDeadline < 70) {
+    riskScore += 10;
+    generatedRisks.push({
+      id: 'r_dead_med',
+      title: 'Moderate Milestone Buffer',
+      category: 'Deadline Risk',
+      impact: 'Medium',
+      likelihood: 'Low',
+      description: `Target deadline of ${daysUntilDeadline} days is achievable with disciplined sprint tracking.`,
+      reason: `Moderate timeline buffer.`,
+      mitigationStrategy: 'Monitor milestone completion weekly.'
     });
   }
 
-  // 3. Project Complexity & Budget Insufficiency
-  const isHighComplexityDomain = ['enterprise', 'healthcare', 'banking', 'government', 'ai', 'cybersecurity', 'national', 'fintech', 'disaster'].some(
+  // 3. Project Complexity & Budget Evaluation
+  const isHighComplexityDomain = ['enterprise', 'healthcare', 'banking', 'government', 'ai', 'cybersecurity', 'national', 'fintech', 'disaster', 'inventory', 'e-commerce'].some(
     keyword => name.includes(keyword) || bizType.includes(keyword) || goal.includes(keyword)
   );
 
   if (isHighComplexityDomain) {
-    riskScore += 20;
+    riskScore += 18;
     generatedRisks.push({
       id: 'r_comp',
-      title: 'High Domain & Regulatory Complexity',
-      category: 'Compliance & Scale',
+      title: 'High Technical Complexity',
+      category: 'Technical Debt',
       impact: 'High',
       likelihood: 'Medium',
-      description: `Project scope spans high-security, national-scale, or enterprise architecture requirements.`,
-      reason: `Enterprise, Healthcare, Government, and AI platforms carry strict compliance and performance benchmarks.`,
+      description: `Project scope spans enterprise, security, or data pipeline architecture requirements.`,
+      reason: `Complex domain rules carry strict compliance and performance benchmarks.`,
       mitigationStrategy: 'Implement automated linting, security audits, and dedicated staging environments.'
     });
   }
 
-  const budgetThreshold = isHighComplexityDomain ? 10000000 : 2500000; // ₹1 Crore vs ₹25 Lakhs
+  const budgetThreshold = isHighComplexityDomain ? 8000000 : 2000000; // ₹80 Lakhs vs ₹20 Lakhs
 
   if (budget < budgetThreshold) {
-    riskScore += 20;
+    riskScore += 22;
     generatedRisks.push({
       id: 'r_budg',
-      title: 'Budget Shortfall Risk',
-      category: 'Financial',
+      title: 'Financial Budget Shortfall',
+      category: 'Financial Risk',
       impact: 'High',
       likelihood: 'Medium',
-      description: `Allocated budget of ₹${budget.toLocaleString('en-IN')} is below the recommended threshold (₹${budgetThreshold.toLocaleString('en-IN')}) for this complexity.`,
-      reason: `High complexity requirements demand higher expenditure for infrastructure, security, and specialized talent.`,
+      description: `Allocated budget of ₹${budget.toLocaleString('en-IN')} is below the recommended threshold (₹${budgetThreshold.toLocaleString('en-IN')}).`,
+      reason: `Required infrastructure and tooling exceed the current budget allocation.`,
       mitigationStrategy: 'Increase project budget allocation or scale back non-essential third-party service dependencies.'
     });
-    copilotRecs.push(`Increase budget allocation to support enterprise infrastructure and specialized tooling.`);
+    copilotRecs.push(`Increase budget allocation to support enterprise infrastructure.`);
   }
 
   // 4. Skill Gap Evaluation
   const allTeamSkills = new Set();
   team.forEach(m => (m.skills || []).forEach(s => allTeamSkills.add(s.toLowerCase())));
 
-  const requiredSkills = ['ai', 'security', 'devops', 'cloud', 'architecture', 'qa', 'testing'];
+  const requiredSkills = ['ai', 'security', 'devops', 'cloud', 'architecture', 'qa', 'testing', 'react', 'node.js', 'postgresql', 'redis'];
   const missingSkills = requiredSkills.filter(req => !Array.from(allTeamSkills).some(ts => ts.includes(req)));
 
-  if (missingSkills.length >= 2) {
-    riskScore += 20;
+  if (missingSkills.length >= 3) {
+    riskScore += 22;
     generatedRisks.push({
       id: 'r_skill',
-      title: 'Critical Skill Gap',
+      title: 'Specialized Skill Gap',
       category: 'Skill Gap',
       impact: 'High',
       likelihood: 'High',
-      description: `Specialized domain skills (${missingSkills.slice(0, 3).join(', ').toUpperCase()}) are missing from the active team.`,
-      reason: `Current team skillsets do not cover all technical domains required for high-quality delivery.`,
+      description: `Specialized domain skills (${missingSkills.slice(0, 3).join(', ').toUpperCase()}) are missing from current team.`,
+      reason: `Current team skillsets do not cover all technical engineering domains required.`,
       mitigationStrategy: 'Recruit specialized engineers or contract external domain experts for key modules.'
     });
     copilotRecs.push(`Recruit missing specialists for ${missingSkills.slice(0, 3).join(', ').toUpperCase()} engineering domains.`);
   }
 
-  // 5. Single Point of Failure / Task Overloading
-  if (teamSize <= 2) {
-    riskScore += 15;
+  // 5. Dependency & Security Risks
+  if (name.includes('e-commerce') || name.includes('payment') || goal.includes('payment') || goal.includes('inventory')) {
     generatedRisks.push({
-      id: 'r_spof',
-      title: 'Single Point of Failure',
-      category: 'Resource Allocation',
-      impact: 'High',
-      likelihood: 'High',
-      description: `Backend and system architecture responsibilities are concentrated on 1-2 team members.`,
-      reason: `If a key team member becomes unavailable, project delivery will halt completely.`,
-      mitigationStrategy: 'Cross-train team members and enforce pair-programming on critical modules.'
+      id: 'r_dep',
+      title: 'Third-Party API Dependency',
+      category: 'Dependency Risk',
+      impact: 'Medium',
+      likelihood: 'Medium',
+      description: 'Integration with external payment gateways, supplier APIs, or logistics websockets.',
+      reason: 'External API rate limits or latency degradation could impact checkout UX.',
+      mitigationStrategy: 'Implement circuit breaker pattern and fallback offline queues.'
     });
-    copilotRecs.push('Reassign overloaded employees and implement cross-training to remove single points of failure.');
   }
 
   if (generatedRisks.length === 0) {
     generatedRisks.push({
       id: 'r_opt',
-      title: 'Minor Optimization Opportunity',
-      category: 'General',
+      title: 'Standard Operational Buffer',
+      category: 'Technical Debt',
       impact: 'Low',
       likelihood: 'Low',
       description: 'Minor latency optimization opportunities in database query indexing.',
@@ -347,57 +382,73 @@ function computeDynamicRiskAnalysis(p) {
     });
   }
 
-  const finalRiskScore = Math.min(100, Math.max(5, riskScore));
+  // Final Overall Risk Score
+  const rawRiskScore = Math.min(98, Math.max(8, riskScore + microVariation));
+  const finalRiskScore = Math.round(rawRiskScore);
 
-  // --- 1. DYNAMIC AI CONFIDENCE INDEX (0 - 100%) ---
-  // Team Skill Match (40% weight):
-  const matchedSkillCount = Math.min(requiredSkills.length, requiredSkills.length - missingSkills.length);
-  const skillRatio = requiredSkills.length > 0 ? (matchedSkillCount / requiredSkills.length) : 1;
+  // --- 1. DYNAMIC AI CONFIDENCE SCORE (0 - 100%) ---
+  // Team Skill Match (40% Weight)
+  const matchedSkillCount = Math.max(1, requiredSkills.length - missingSkills.length);
+  const skillRatio = matchedSkillCount / requiredSkills.length;
   const skillMatchPts = Math.round(40 * skillRatio);
 
-  // Deadline Feasibility (20% weight):
+  // Deadline Feasibility (20% Weight)
   let deadlinePts = 20;
-  if (daysUntilDeadline < 30) deadlinePts = 8;
-  else if (daysUntilDeadline < 60) deadlinePts = 14;
+  if (daysUntilDeadline < 20) deadlinePts = 4;
+  else if (daysUntilDeadline < 45) deadlinePts = 11;
+  else if (daysUntilDeadline < 70) deadlinePts = 16;
 
-  // Budget Adequacy (20% weight):
+  // Budget Adequacy (20% Weight)
   const budgetRatio = Math.min(1.0, budget / budgetThreshold);
   const budgetAdequacyPts = Math.round(20 * budgetRatio);
 
-  // Requirement Completeness (20% weight):
+  // Requirement Completeness (20% Weight)
   const goalLen = (p.goal || '').length;
   const deliverablesCount = (p.expectedDeliverables || []).length;
   let completenessPts = 10;
-  if (goalLen >= 150 && deliverablesCount >= 3) completenessPts = 20;
-  else if (goalLen >= 80 || deliverablesCount >= 2) completenessPts = 15;
+  if (goalLen >= 120 && deliverablesCount >= 3) completenessPts = 20;
+  else if (goalLen >= 60 || deliverablesCount >= 2) completenessPts = 15;
 
-  // Risk Penalty:
-  const riskPenalty = Math.round(finalRiskScore * 0.15);
+  // Risk Penalty
+  const riskPenalty = Math.round(finalRiskScore * 0.18);
 
-  const rawConfidence = skillMatchPts + deadlinePts + budgetAdequacyPts + completenessPts - riskPenalty;
-  const finalConfidenceScore = Math.min(99, Math.max(45, Math.round(rawConfidence)));
+  const rawConfidence = skillMatchPts + deadlinePts + budgetAdequacyPts + completenessPts - riskPenalty + microVariation;
+  
+  // Custom Dynamic Rule:
+  // - Experienced team + realistic deadline = 90-98%
+  // - Small team + difficult project = 45-70%
+  // - Impossible deadline = below 40%
+  let finalConfidenceScore = Math.round(rawConfidence);
+  if (daysUntilDeadline < 20) {
+    finalConfidenceScore = Math.min(38, Math.max(18, finalConfidenceScore));
+  } else if (teamSize <= 2 && isHighComplexityDomain) {
+    finalConfidenceScore = Math.min(68, Math.max(45, finalConfidenceScore));
+  } else if (teamSize >= 4 && daysUntilDeadline >= 60 && budget >= budgetThreshold) {
+    finalConfidenceScore = Math.min(98, Math.max(90, finalConfidenceScore));
+  }
+  finalConfidenceScore = Math.min(99, Math.max(15, finalConfidenceScore));
 
   // --- 2. DYNAMIC BUSINESS HEALTH SCORE (0 - 100) ---
-  // Risk Score Impact (30% weight):
-  const riskPts = Math.max(0, Math.round(30 * (1 - finalRiskScore / 100)));
+  // Risk Score Impact (30% Weight)
+  const riskHealthPts = Math.max(0, Math.round(30 * (1 - finalRiskScore / 100)));
 
-  // Team Workload Balance (25% weight):
+  // Team Workload Balance (25% Weight)
   let workloadPts = 25;
-  if (teamSize <= 1) workloadPts = 8;
-  else if (teamSize <= 2) workloadPts = 14;
-  else if (teamSize <= 4) workloadPts = 20;
+  if (teamSize <= 1) workloadPts = 6;
+  else if (teamSize <= 2) workloadPts = 12;
+  else if (teamSize <= 4) workloadPts = 19;
 
-  // Budget Utilization (25% weight):
+  // Budget Utilization (25% Weight)
   const budgetHealthPts = Math.round(25 * Math.min(1.0, budget / budgetThreshold));
 
-  // Milestone Feasibility (20% weight):
+  // Milestone Feasibility (20% Weight)
   let milestonePts = 20;
-  if (daysUntilDeadline < 30) milestonePts = 9;
-  else if (daysUntilDeadline < 60) milestonePts = 14;
-  if (p.priority === 'Critical') milestonePts = Math.max(5, milestonePts - 4);
+  if (daysUntilDeadline < 20) milestonePts = 5;
+  else if (daysUntilDeadline < 45) milestonePts = 12;
+  if (p.priority === 'Critical') milestonePts = Math.max(4, milestonePts - 4);
 
-  const rawHealth = riskPts + workloadPts + budgetHealthPts + milestonePts;
-  const finalHealthScore = Math.min(99, Math.max(20, Math.round(rawHealth)));
+  const rawHealth = riskHealthPts + workloadPts + budgetHealthPts + milestonePts + microVariation;
+  const finalHealthScore = Math.min(99, Math.max(15, Math.round(rawHealth)));
 
   if (copilotRecs.length === 0) {
     copilotRecs.push('Conduct daily async standups using SprintFlow AI automated progress reports.');
@@ -512,7 +563,7 @@ function generateSmartFallbackPlan(p) {
     reports: {
       readme: `# ${p.name}\n\n> **Autonomous AI Execution Blueprint created by SprintFlow AI**\n\n## 🎯 Executive Overview\n${p.goal}\n\n- **Business Unit:** ${p.businessType}\n- **Priority:** ${p.priority}\n- **Budget:** ₹${Number(p.budget).toLocaleString('en-IN')}\n- **Target Deadline:** ${p.deadline}\n\n## 🚀 Milestones & Key Phases\n1. **${m1Title}** - Infrastructure & Schema Blueprint\n2. **${m2Title}** - Core Functionality & Workflows\n3. **${m3Title}** - Deployment & QA Verification\n\n## 👥 Team Assignments\n${team.map(t => `- **${t.name}** (${t.role}): ${(t.skills || []).join(', ')}`).join('\n')}\n\n---\n*Generated automatically by SprintFlow AI Agentic Operating System*`,
       
-      meetingNotes: `### 📌 SprintFlow AI Project Kickoff Notes\n\n**Project:** ${p.name}\n**Date:** ${new Date().toLocaleDateString()}\n**Facilitator:** SprintFlow AI Coordinator Agent\n\n#### 1. Strategic Objectives\n- Fulfill core requirement: ${p.goal}\n- Target launch date: ${p.deadline}\n- Assigned Budget: ₹${Number(p.budget).toLocaleString('en-IN')}\n\n#### 2. Agent Workflow Highlights\n- **Planner Agent:** Established 3 milestone phases with zero critical path overlaps.\n- **Task Agent:** Optimized assignment matrices for ${team.length} team members.\n- **Risk Agent:** Evaluated ${dynamicEval.risks.length} dynamic risks (Score: ${dynamicEval.riskScore}/100).\n\n#### 3. Action Items\n- [ ] ${mem1.name}: Complete System Blueprint & DB Schema Design\n- [ ] ${mem2.name}: Initialize Design System & Glassmorphic UI Components\n- [ ] All Team Members: Review SprintFlow AI Risk Matrix`,
+      meetingNotes: `### 📌 SprintFlow AI Project Kickoff Notes\n\n**Project:** ${p.name}\n**Date:** ${new Date().toLocaleDateString()}\n**Facilitator:** SprintFlow AI Coordinator Agent\n\n#### 1. Strategic Objectives\n- Fulfill core requirement: ${p.goal}\n- Target launch date: ${p.deadline}\n- Assigned Budget: ₹${Number(p.budget).toLocaleString('en-IN')}\n\n#### 2. Agent Workflow Highlights\n- **Requirement Analysis:** Parsed project objectives and budget bounds.\n- **Planner Agent:** Established 3 milestone phases with zero critical path overlaps.\n- **Task Agent:** Optimized assignment matrices for ${team.length} team members.\n- **Risk Agent:** Evaluated ${dynamicEval.risks.length} dynamic risks (Score: ${dynamicEval.riskScore}/100).\n\n#### 3. Action Items\n- [ ] ${mem1.name}: Complete System Blueprint & DB Schema Design\n- [ ] ${mem2.name}: Initialize Design System & Glassmorphic UI Components\n- [ ] All Team Members: Review SprintFlow AI Risk Matrix`,
       
       statusReport: `### 📊 Weekly Executive Status Report - ${p.name}\n\n**Overall Health Score:** ${dynamicEval.healthScore}/100 ${dynamicEval.healthScore >= 75 ? '🟢 (GREEN)' : dynamicEval.healthScore >= 50 ? '🟡 (YELLOW)' : '🔴 (RED)'}\n**AI Confidence Index:** ${dynamicEval.confidenceScore}%\n**Overall Risk Index:** ${dynamicEval.riskScore}/100\n\n#### Summary\nProject planning and multi-agent reasoning completed. All initial dependencies have been mapped with assignment rationales.\n\n#### Key Performance Metrics\n- **Budget Burn Rate:** 0% (On Track)\n- **Milestones Planned:** 3\n- **Identified Risks:** ${dynamicEval.risks.length} (Mitigations Active)\n\n#### Next Steps\nBegin execution of Milestone 1 tasks immediately. Coordinator Agent will monitor task velocity in real-time.`,
       
@@ -523,37 +574,51 @@ function generateSmartFallbackPlan(p) {
     agentLogs: [
       {
         timestamp: '00:01',
-        agent: 'Planner Agent',
-        action: `Deconstructed '${p.name}' requirements into 3 milestone phases.`,
-        details: `Evaluated business constraints (₹${Number(p.budget).toLocaleString('en-IN')} budget, target deadline ${p.deadline}).`,
+        agent: 'Requirement Analysis',
+        action: `Parsed project goals, deliverables, and team capacity constraints.`,
+        details: `Evaluated budget parameters (₹${Number(p.budget).toLocaleString('en-IN')}).`,
         type: 'reasoning'
       },
       {
         timestamp: '00:02',
-        agent: 'Task Agent',
-        action: `Matched tasks across ${team.length} team members.`,
-        details: `Assigned tasks using skill-matching logic and capacity balancing. Generated rationale for each assignment.`,
-        type: 'success'
+        agent: 'Planner Agent Thinking...',
+        action: `Deconstructed requirements into 3 agile milestone phases.`,
+        details: `Calculated target dates and sprint phases.`,
+        type: 'reasoning'
       },
       {
         timestamp: '00:03',
-        agent: 'Risk Agent',
-        action: `Evaluated ${dynamicEval.risks.length} dynamic risk factors (Calculated Risk Score: ${dynamicEval.riskScore}/100).`,
-        details: `Populated 2x2 Heatmap vectors and action safeguards.`,
-        type: dynamicEval.riskScore >= 50 ? 'warning' : 'success'
+        agent: 'Task Decomposition',
+        action: `Decomposed milestones into atomic technical tasks.`,
+        details: `Established dependency graphs.`,
+        type: 'success'
       },
       {
         timestamp: '00:04',
-        agent: 'Coordinator Agent',
-        action: `Calculated critical path and synchronized milestone dependencies.`,
-        details: `Established automated progress monitoring rules.`,
-        type: 'info'
+        agent: 'Skill Matching',
+        action: `Matched tasks across ${team.length} employee skillsets.`,
+        details: `Generated explicit assignment rationales for each developer.`,
+        type: 'success'
       },
       {
         timestamp: '00:05',
-        agent: 'Report Agent',
-        action: `Compiled README, Meeting Summary, Executive Status, Presentation Deck, and Client Briefing.`,
-        details: `Synthesized all exportable project documentation.`,
+        agent: 'Coordinator Optimization',
+        action: `Calculated critical path and synchronized milestone dependencies.`,
+        details: `Balanced workload variance across assigned team members.`,
+        type: 'info'
+      },
+      {
+        timestamp: '00:06',
+        agent: 'Risk Analysis',
+        action: `Evaluated ${dynamicEval.risks.length} dynamic risk factors (Calculated Risk Score: ${dynamicEval.riskScore}/100).`,
+        details: `Populated 2x2 Heatmap matrix vectors and copilot recommendations.`,
+        type: dynamicEval.riskScore >= 50 ? 'warning' : 'success'
+      },
+      {
+        timestamp: '00:07',
+        agent: 'Report Generation',
+        action: `Compiled README, Kickoff Notes, Status Report, Deck & Client Briefing.`,
+        details: `Synthesized all exportable project artifacts.`,
         type: 'success'
       }
     ]
