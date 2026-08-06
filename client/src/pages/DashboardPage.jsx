@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import AICopilotDrawer from '../components/AICopilotDrawer';
 import { projectAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { playAgentChime } from '../utils/audio';
@@ -112,9 +111,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#070A11] text-white flex flex-col selection:bg-purple-500/30">
       <Navbar />
-
-      {/* Floating AI Co-Pilot Drawer */}
-      <AICopilotDrawer project={topProject} />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
         <Sidebar activeProject={topProject} />
