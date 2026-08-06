@@ -136,7 +136,6 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
   ]
 }`;
 
-      // Enforce strict 10-second timeout for Gemini API call to prevent hanging
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Gemini API call exceeded 10-second timeout')), 10000)
       );
@@ -154,13 +153,13 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
     }
   }
 
-  // If Gemini API is not set or failed/timed out, generate dynamic local AI reasoning strategy
+  // Always compute dynamic scores based on project attributes
+  const dynamicEval = computeDynamicRiskAnalysis(projectInput);
+
   if (!aiGeneratedData) {
     console.log('[Agent Orchestrator] Utilizing SprintFlow High-Fidelity Dynamic Local AI Reasoning Engine...');
     aiGeneratedData = generateSmartFallbackPlan(projectInput);
   } else {
-    // Post-process AI generated data to guarantee dynamic risk scores match exact rules
-    const dynamicEval = computeDynamicRiskAnalysis(projectInput);
     if (!aiGeneratedData.risks || aiGeneratedData.risks.length === 0) {
       aiGeneratedData.risks = dynamicEval.risks;
     }
@@ -176,7 +175,7 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
 }
 
 /**
- * Dynamic Risk Scoring & Analysis Engine
+ * Dynamic Risk Scoring & Dynamic AI Confidence & Business Health Calculation Engine
  */
 function computeDynamicRiskAnalysis(p) {
   const team = p.teamMembers || [];
@@ -335,7 +334,6 @@ function computeDynamicRiskAnalysis(p) {
     copilotRecs.push('Reassign overloaded employees and implement cross-training to remove single points of failure.');
   }
 
-  // Fallback risk if project is low risk
   if (generatedRisks.length === 0) {
     generatedRisks.push({
       id: 'r_opt',
@@ -349,12 +347,57 @@ function computeDynamicRiskAnalysis(p) {
     });
   }
 
-  const finalRiskScore = Math.min(100, Math.max(10, riskScore));
-  let healthScore = 100 - Math.round(finalRiskScore * 0.65);
-  if (teamSize >= 5) healthScore += 5;
-  if (budget >= budgetThreshold) healthScore += 5;
-  const finalHealthScore = Math.min(99, Math.max(15, healthScore));
-  const finalConfidenceScore = Math.min(99, Math.max(45, 100 - Math.round(finalRiskScore * 0.4)));
+  const finalRiskScore = Math.min(100, Math.max(5, riskScore));
+
+  // --- 1. DYNAMIC AI CONFIDENCE INDEX (0 - 100%) ---
+  // Team Skill Match (40% weight):
+  const matchedSkillCount = Math.min(requiredSkills.length, requiredSkills.length - missingSkills.length);
+  const skillRatio = requiredSkills.length > 0 ? (matchedSkillCount / requiredSkills.length) : 1;
+  const skillMatchPts = Math.round(40 * skillRatio);
+
+  // Deadline Feasibility (20% weight):
+  let deadlinePts = 20;
+  if (daysUntilDeadline < 30) deadlinePts = 8;
+  else if (daysUntilDeadline < 60) deadlinePts = 14;
+
+  // Budget Adequacy (20% weight):
+  const budgetRatio = Math.min(1.0, budget / budgetThreshold);
+  const budgetAdequacyPts = Math.round(20 * budgetRatio);
+
+  // Requirement Completeness (20% weight):
+  const goalLen = (p.goal || '').length;
+  const deliverablesCount = (p.expectedDeliverables || []).length;
+  let completenessPts = 10;
+  if (goalLen >= 150 && deliverablesCount >= 3) completenessPts = 20;
+  else if (goalLen >= 80 || deliverablesCount >= 2) completenessPts = 15;
+
+  // Risk Penalty:
+  const riskPenalty = Math.round(finalRiskScore * 0.15);
+
+  const rawConfidence = skillMatchPts + deadlinePts + budgetAdequacyPts + completenessPts - riskPenalty;
+  const finalConfidenceScore = Math.min(99, Math.max(45, Math.round(rawConfidence)));
+
+  // --- 2. DYNAMIC BUSINESS HEALTH SCORE (0 - 100) ---
+  // Risk Score Impact (30% weight):
+  const riskPts = Math.max(0, Math.round(30 * (1 - finalRiskScore / 100)));
+
+  // Team Workload Balance (25% weight):
+  let workloadPts = 25;
+  if (teamSize <= 1) workloadPts = 8;
+  else if (teamSize <= 2) workloadPts = 14;
+  else if (teamSize <= 4) workloadPts = 20;
+
+  // Budget Utilization (25% weight):
+  const budgetHealthPts = Math.round(25 * Math.min(1.0, budget / budgetThreshold));
+
+  // Milestone Feasibility (20% weight):
+  let milestonePts = 20;
+  if (daysUntilDeadline < 30) milestonePts = 9;
+  else if (daysUntilDeadline < 60) milestonePts = 14;
+  if (p.priority === 'Critical') milestonePts = Math.max(5, milestonePts - 4);
+
+  const rawHealth = riskPts + workloadPts + budgetHealthPts + milestonePts;
+  const finalHealthScore = Math.min(99, Math.max(20, Math.round(rawHealth)));
 
   if (copilotRecs.length === 0) {
     copilotRecs.push('Conduct daily async standups using SprintFlow AI automated progress reports.');
