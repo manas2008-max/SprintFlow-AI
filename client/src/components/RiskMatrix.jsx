@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldAlert, ShieldCheck, AlertTriangle, Lightbulb, Activity, Zap, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, AlertTriangle, Lightbulb, Zap, CheckCircle2, AlertOctagon, HelpCircle } from 'lucide-react';
 import { playAgentChime, playSuccessFanfare } from '../utils/audio';
 
-export default function RiskMatrix({ risks = [] }) {
+export default function RiskMatrix({ risks = [], overallRiskScore = 0 }) {
   const [filterCategory, setFilterCategory] = useState('All');
   const [isSimulatingMitigation, setIsSimulatingMitigation] = useState(false);
   const [mitigationComplete, setMitigationComplete] = useState(false);
@@ -38,15 +38,29 @@ export default function RiskMatrix({ risks = [] }) {
     return s.includes('med');
   };
 
-  // Synchronized 2x2 Heatmap Bucketing
+  // Synchronized 2x2 Heatmap Quadrant Bucketing
   const hhRisks = risks.filter(r => isHighStr(getImpact(r)) && isHighStr(getLikelihood(r)));
-  const hlRisks = risks.filter(r => isHighStr(getImpact(r)) && !isHighStr(getLikelihood(r)));
-  const lhRisks = risks.filter(r => !isHighStr(getImpact(r)) && isHighStr(getLikelihood(r)));
-  const llRisks = risks.filter(r => !isHighStr(getImpact(r)) && !isHighStr(getLikelihood(r)));
+  const hmRisks = risks.filter(r => isHighStr(getImpact(r)) && isMedStr(getLikelihood(r)));
+  const mhRisks = risks.filter(r => isMedStr(getImpact(r)) && isHighStr(getLikelihood(r)));
+  const llRisks = risks.filter(r => (!isHighStr(getImpact(r)) && !isMedStr(getImpact(r))) || (!isHighStr(getLikelihood(r)) && !isMedStr(getLikelihood(r))));
 
-  // Determine overall dominant heatmap status
-  const maxImpactHigh = risks.some(r => isHighStr(getImpact(r)));
-  const maxImpactMed = risks.some(r => isMedStr(getImpact(r)));
+  // Calculate dynamic overall risk classification
+  const calculatedScore = overallRiskScore || (
+    hhRisks.length * 25 + hmRisks.length * 15 + mhRisks.length * 15 + llRisks.length * 5
+  );
+
+  let riskClass = { label: 'Low', color: 'emerald', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' };
+  if (calculatedScore >= 76) {
+    riskClass = { label: 'Critical', color: 'rose', bg: 'bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/50' };
+  } else if (calculatedScore >= 51) {
+    riskClass = { label: 'High', color: 'orange', bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/40' };
+  } else if (calculatedScore >= 26) {
+    riskClass = { label: 'Medium', color: 'amber', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' };
+  }
+
+  if (mitigationComplete) {
+    riskClass = { label: 'Low (Mitigated)', color: 'emerald', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' };
+  }
 
   const handleSimulateMitigation = () => {
     playAgentChime(600);
@@ -64,12 +78,17 @@ export default function RiskMatrix({ risks = [] }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-            <ShieldAlert className="w-5 h-5 text-rose-400" />
-            <span>Autonomous Risk Matrix & Mitigation System</span>
-          </h3>
-          <p className="text-xs text-slate-400">
-            Detected and evaluated in real-time by Risk Agent based on generated project requirements.
+          <div className="flex items-center space-x-3">
+            <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+              <ShieldAlert className="w-5 h-5 text-rose-400" />
+              <span>Autonomous Risk Matrix & Mitigation Engine</span>
+            </h3>
+            <span className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${riskClass.bg} ${riskClass.text} ${riskClass.border}`}>
+              Overall Risk: {riskClass.label} ({calculatedScore}/100)
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Calculated dynamically by Risk Agent based on team capacity, deadline, budget, skill gap, and task allocation.
           </p>
         </div>
 
@@ -79,26 +98,18 @@ export default function RiskMatrix({ risks = [] }) {
           className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-xs font-bold text-white shadow-lg shadow-rose-600/20 transition-all hover:scale-105"
         >
           <Zap className={`w-3.5 h-3.5 ${isSimulatingMitigation ? 'animate-spin' : ''}`} />
-          <span>{isSimulatingMitigation ? 'Recalculating Risk...' : 'Simulate AI Risk Mitigation'}</span>
+          <span>{isSimulatingMitigation ? 'Recalculating Risk...' : 'Simulate AI Risk Safeguards'}</span>
         </button>
       </div>
 
-      {/* Dynamic 2x2 Heatmap Matrix Preview */}
+      {/* Dynamic 2x2 Heatmap Matrix Grid */}
       <div className="p-5 rounded-2xl glass-panel border border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider block">
             2x2 Impact vs Likelihood Heatmap Grid
           </span>
-          <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded border ${
-            mitigationComplete 
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-              : maxImpactHigh
-                ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                : maxImpactMed
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-          }`}>
-            {mitigationComplete ? 'All Mitigated 🟢' : maxImpactHigh ? 'High Impact Vectors Detected' : maxImpactMed ? 'Medium Risk Profile' : 'Low Impact Buffer Zone'}
+          <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded border ${riskClass.bg} ${riskClass.text} ${riskClass.border}`}>
+            {mitigationComplete ? 'All Safeguards Applied 🟢' : `${risks.length} Dynamic Risk Vectors Active`}
           </span>
         </div>
 
@@ -106,57 +117,79 @@ export default function RiskMatrix({ risks = [] }) {
           
           {/* High Impact / High Likelihood */}
           <div className={`p-4 rounded-xl border transition-all ${
-            hhRisks.length > 0
-              ? 'bg-rose-950/50 border-rose-500/40 text-rose-300 shadow-md shadow-rose-950/50'
+            !mitigationComplete && hhRisks.length > 0
+              ? 'bg-rose-950/60 border-rose-500/50 text-rose-300 shadow-lg shadow-rose-950/60 ring-1 ring-rose-500/30'
               : 'bg-slate-900/40 border-slate-800 text-slate-500'
           }`}>
-            <span className="font-extrabold block">High Impact / High Likelihood</span>
-            <span className="text-[10px] mt-1 block">
-              {hhRisks.length > 0 
-                ? `${hhRisks.length} Vector(s) (${hhRisks.map(r => r.title.split(' ')[0]).join(', ')})`
-                : '0 Active Vectors'}
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-extrabold text-rose-400">High Impact / High Likelihood</span>
+              {hhRisks.length > 0 && !mitigationComplete && <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />}
+            </div>
+            <span className="text-xs font-bold mt-1 block">
+              {mitigationComplete ? '0 Active Vectors' : `${hhRisks.length} Active Vector(s)`}
             </span>
+            {hhRisks.length > 0 && !mitigationComplete && (
+              <span className="text-[10px] text-rose-300/80 block mt-1 truncate">
+                {hhRisks.map(r => r.title).join(', ')}
+              </span>
+            )}
           </div>
 
-          {/* High Impact / Low Likelihood */}
+          {/* High Impact / Medium Likelihood */}
           <div className={`p-4 rounded-xl border transition-all ${
-            hlRisks.length > 0
-              ? 'bg-amber-950/50 border-amber-500/40 text-amber-300 shadow-md shadow-amber-950/50'
+            !mitigationComplete && hmRisks.length > 0
+              ? 'bg-amber-950/60 border-amber-500/50 text-amber-300 shadow-lg shadow-amber-950/60'
               : 'bg-slate-900/40 border-slate-800 text-slate-500'
           }`}>
-            <span className="font-extrabold block">High Impact / Low-Med Likelihood</span>
-            <span className="text-[10px] mt-1 block">
-              {hlRisks.length > 0 
-                ? `${hlRisks.length} Vector(s) (${hlRisks.map(r => r.title.split(' ')[0]).join(', ')})`
-                : '0 Active Vectors'}
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-extrabold text-amber-400">High Impact / Medium Likelihood</span>
+              {hmRisks.length > 0 && !mitigationComplete && <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />}
+            </div>
+            <span className="text-xs font-bold mt-1 block">
+              {mitigationComplete ? '0 Active Vectors' : `${hmRisks.length} Active Vector(s)`}
             </span>
+            {hmRisks.length > 0 && !mitigationComplete && (
+              <span className="text-[10px] text-amber-300/80 block mt-1 truncate">
+                {hmRisks.map(r => r.title).join(', ')}
+              </span>
+            )}
           </div>
 
-          {/* Low Impact / High Likelihood */}
+          {/* Medium Impact / High Likelihood */}
           <div className={`p-4 rounded-xl border transition-all ${
-            lhRisks.length > 0
-              ? 'bg-indigo-950/50 border-indigo-500/40 text-indigo-300 shadow-md shadow-indigo-950/50'
+            !mitigationComplete && mhRisks.length > 0
+              ? 'bg-orange-950/60 border-orange-500/50 text-orange-300 shadow-lg shadow-orange-950/60'
               : 'bg-slate-900/40 border-slate-800 text-slate-500'
           }`}>
-            <span className="font-extrabold block">Low-Med Impact / High Likelihood</span>
-            <span className="text-[10px] mt-1 block">
-              {lhRisks.length > 0 
-                ? `${lhRisks.length} Vector(s) (${lhRisks.map(r => r.title.split(' ')[0]).join(', ')})`
-                : '0 Active Vectors'}
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-extrabold text-orange-400">Medium Impact / High Likelihood</span>
+              {mhRisks.length > 0 && !mitigationComplete && <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />}
+            </div>
+            <span className="text-xs font-bold mt-1 block">
+              {mitigationComplete ? '0 Active Vectors' : `${mhRisks.length} Active Vector(s)`}
             </span>
+            {mhRisks.length > 0 && !mitigationComplete && (
+              <span className="text-[10px] text-orange-300/80 block mt-1 truncate">
+                {mhRisks.map(r => r.title).join(', ')}
+              </span>
+            )}
           </div>
 
           {/* Low Impact / Low Likelihood */}
           <div className={`p-4 rounded-xl border transition-all ${
-            llRisks.length > 0
-              ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-300 shadow-md shadow-emerald-950/50'
+            mitigationComplete || llRisks.length > 0 || risks.length === 0
+              ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-950/60'
               : 'bg-slate-900/40 border-slate-800 text-slate-500'
           }`}>
-            <span className="font-extrabold block">Low Impact / Low Likelihood</span>
-            <span className="text-[10px] mt-1 block">
-              {llRisks.length > 0 
-                ? `${llRisks.length} Vector(s) (Optimal Buffer)`
-                : 'Optimal Buffer Zone'}
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-extrabold text-emerald-400">Low Impact / Low Likelihood</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <span className="text-xs font-bold mt-1 block">
+              {mitigationComplete ? `${risks.length} Mitigated Vector(s)` : `${llRisks.length} Active Vector(s)`}
+            </span>
+            <span className="text-[10px] text-emerald-300/80 block mt-1">
+              Optimal Buffer Zone
             </span>
           </div>
 
@@ -242,6 +275,13 @@ export default function RiskMatrix({ risks = [] }) {
                   </span>
                 </div>
               </div>
+
+              {/* Empirical Reason */}
+              {risk.reason && (
+                <div className="p-2.5 rounded-lg bg-rose-500/5 border border-rose-500/20 text-xs text-rose-300/90 font-mono">
+                  <strong className="text-rose-400">Trigger Reason:</strong> {risk.reason}
+                </div>
+              )}
 
               <p className="text-xs text-slate-300 leading-relaxed">
                 {risk.description}
