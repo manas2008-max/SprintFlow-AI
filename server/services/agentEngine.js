@@ -32,16 +32,13 @@ Project Details:
 - Team Members: ${JSON.stringify(projectInput.teamMembers || [])}
 - Expected Deliverables: ${JSON.stringify(projectInput.expectedDeliverables || [])}
 
-Perform dynamic risk scoring:
-Evaluate team size, deadline, budget, skill gap, single point of failure, and domain complexity.
-
 Return ONLY a single valid JSON object matching this schema EXACTLY without markdown code block backticks:
 
 {
   "executiveSummary": "Strategic summary of the project execution plan.",
-  "aiConfidenceScore": 88,
-  "businessHealthScore": 78,
-  "overallRiskScore": 55,
+  "aiConfidenceScore": 92,
+  "businessHealthScore": 94,
+  "overallRiskScore": 18,
   "milestones": [
     {
       "id": "m1",
@@ -81,8 +78,8 @@ Return ONLY a single valid JSON object matching this schema EXACTLY without mark
     }
   ],
   "recommendations": [
-    "Increase team size to balance critical path workload",
-    "Extend project deadline to allow thorough QA testing"
+    "Conduct daily async standups using SprintFlow AI automated progress reports",
+    "Implement automated integration testing prior to Milestone 2 completion"
   ],
   "reports": {
     "readme": "# Project Title\\n\\n## Overview...",
@@ -169,17 +166,19 @@ Return ONLY a single valid JSON object matching this schema EXACTLY without mark
 }
 
 /**
- * 100% Dynamic Multi-Tier AI Scoring Engine
- * Evaluates Project Complexity, Budget, Deadline, Employee Count, Employee Skills, Workload & Skill Gap
+ * Intelligent Dynamic Scoring Engine
+ * Positive Contribution Model:
+ * Enterprise projects with complete information receive AI Confidence 82-97% and Business Health 85-100.
  */
 function computeDynamicRiskAnalysis(p) {
   const team = p.teamMembers || [];
   const teamSize = team.length;
   const deadlineStr = p.deadline || '';
   const budget = Number(p.budget) || 0;
-  const goal = (p.goal || '').toLowerCase();
-  const name = (p.name || '').toLowerCase();
-  const bizType = (p.businessType || '').toLowerCase();
+  const goal = (p.goal || '').trim();
+  const name = (p.name || '').trim();
+  const bizType = (p.businessType || '').trim();
+  const deliverables = p.expectedDeliverables || [];
 
   // 1. Calculate Days Until Deadline
   let daysUntilDeadline = 60;
@@ -195,168 +194,129 @@ function computeDynamicRiskAnalysis(p) {
     }
   }
 
-  // 2. Identify High Complexity Category
-  const isHighComplexityDomain = ['enterprise', 'healthcare', 'banking', 'government', 'ai', 'cybersecurity', 'national', 'disaster', 'fintech'].some(
-    keyword => name.includes(keyword) || bizType.includes(keyword) || goal.includes(keyword)
-  );
-
-  const budgetThreshold = isHighComplexityDomain ? 8000000 : 2000000;
-
-  // 3. Evaluate Skill Gap
-  const allTeamSkills = new Set();
-  team.forEach(m => (m.skills || []).forEach(s => allTeamSkills.add(s.toLowerCase())));
-  const requiredSkills = ['ai', 'security', 'devops', 'cloud', 'architecture', 'qa', 'testing', 'react', 'node.js', 'postgresql', 'redis'];
-  const missingSkills = requiredSkills.filter(req => !Array.from(allTeamSkills).some(ts => ts.includes(req)));
-
-  // 4. Calculate Composite Difficulty Factor (0.0 to 1.0)
-  const complexityFactor = isHighComplexityDomain ? 0.35 : 0.10;
-  const capacityFactor = teamSize <= 1 ? 0.35 : teamSize <= 2 ? 0.25 : teamSize <= 4 ? 0.12 : 0.02;
-  const deadlineFactor = daysUntilDeadline < 20 ? 0.35 : daysUntilDeadline < 45 ? 0.22 : daysUntilDeadline < 70 ? 0.10 : 0.02;
-  const budgetRatio = budget / budgetThreshold;
-  const budgetFactor = budgetRatio < 0.5 ? 0.25 : budgetRatio < 1.0 ? 0.12 : 0.02;
-  const skillFactor = missingSkills.length >= 3 ? 0.20 : missingSkills.length >= 1 ? 0.10 : 0.02;
-
-  const totalDifficulty = Math.min(1.0, complexityFactor + capacityFactor + deadlineFactor + budgetFactor + skillFactor);
-
-  // Deterministic seed Hash for micro-variations (-3 to +3) so every project returns unique percentages
+  // Seed Hash for micro-variance (-2 to +2) so every project returns unique percentages
   const seedHash = (name + goal + budget + daysUntilDeadline).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const variance = (seedHash % 7) - 3;
+  const microVariance = (seedHash % 5) - 2;
 
-  // 5. Tiered Dynamic Score Mapping based on totalDifficulty:
-  let finalRiskScore = 0;
-  let finalConfidenceScore = 0;
-  let finalHealthScore = 0;
-
-  if (totalDifficulty >= 0.75 || daysUntilDeadline < 20 || (teamSize <= 1 && isHighComplexityDomain)) {
-    // Impossible Project: Risk Critical (76-98), AI Confidence (<45%), Business Health (<40%)
-    finalRiskScore = Math.min(98, Math.max(76, Math.round(76 + (totalDifficulty - 0.75) * 80 + variance)));
-    finalConfidenceScore = Math.min(44, Math.max(18, Math.round(44 - (totalDifficulty - 0.75) * 80 + variance)));
-    finalHealthScore = Math.min(39, Math.max(15, Math.round(39 - (totalDifficulty - 0.75) * 70 + variance)));
-  } else if (totalDifficulty >= 0.50) {
-    // Complex Project: Risk High (51-75), AI Confidence (45-69%), Business Health (40-64%)
-    finalRiskScore = Math.min(75, Math.max(51, Math.round(51 + (totalDifficulty - 0.50) * 90 + variance)));
-    finalConfidenceScore = Math.min(69, Math.max(45, Math.round(69 - (totalDifficulty - 0.50) * 90 + variance)));
-    finalHealthScore = Math.min(64, Math.max(40, Math.round(64 - (totalDifficulty - 0.50) * 90 + variance)));
-  } else if (totalDifficulty >= 0.25) {
-    // Medium Project: Risk Medium (26-50), AI Confidence (70-89%), Business Health (65-84%)
-    finalRiskScore = Math.min(50, Math.max(26, Math.round(26 + (totalDifficulty - 0.25) * 95 + variance)));
-    finalConfidenceScore = Math.min(89, Math.max(70, Math.round(89 - (totalDifficulty - 0.25) * 75 + variance)));
-    finalHealthScore = Math.min(84, Math.max(65, Math.round(84 - (totalDifficulty - 0.25) * 75 + variance)));
-  } else {
-    // Easy Project: Risk Low (8-25), AI Confidence (90-98%), Business Health (85-100%)
-    finalRiskScore = Math.min(25, Math.max(8, Math.round(8 + totalDifficulty * 68 + variance)));
-    finalConfidenceScore = Math.min(98, Math.max(90, Math.round(98 - totalDifficulty * 32 + variance)));
-    finalHealthScore = Math.min(99, Math.max(85, Math.round(100 - totalDifficulty * 60 + variance)));
-  }
-
-  // Generate dynamic risk cards & copilot recommendations
+  // 2. Risk Calculation (Gradual & Fair)
+  let riskScore = 12; // Healthy baseline risk
   const generatedRisks = [];
   const copilotRecs = [];
 
+  // Risk Factors (Gradual additions)
   if (teamSize <= 1) {
+    riskScore += 18;
     generatedRisks.push({
       id: 'r_cap_solo',
-      title: 'Solo Engineer Risk',
+      title: 'Solo Engineer Dependency',
       category: 'Resource Constraint',
       impact: 'High',
-      likelihood: 'High',
-      description: `Only 1 employee assigned to handle full-stack architecture, testing, and deployment.`,
-      reason: `Single employee creating critical capacity bottleneck.`,
-      mitigationStrategy: 'Add at least 2 additional engineers to distribute architectural responsibilities.'
+      likelihood: 'Medium',
+      description: 'Single engineer assigned to deliver full architecture and deployment.',
+      reason: 'Capacity bottleneck with solo developer assignment.',
+      mitigationStrategy: 'Assign at least 1 additional team member to pair-program on core modules.'
     });
-    copilotRecs.push('Hire or assign additional developers to eliminate single-developer dependency.');
-  } else if (teamSize <= 2) {
-    generatedRisks.push({
-      id: 'r_cap',
-      title: 'Team Capacity Constraint',
-      category: 'Resource Constraint',
-      impact: 'High',
-      likelihood: 'High',
-      description: `Team size of ${teamSize} developer(s) is understaffed for the required project scope.`,
-      reason: `Only ${teamSize} employee(s) assigned to handle full development cycle.`,
-      mitigationStrategy: 'Contract external domain specialists immediately to balance workload.'
-    });
-    copilotRecs.push('Increase team size to balance critical path workload.');
+    copilotRecs.push('Assign an additional engineer to balance critical path responsibilities.');
   }
 
   if (daysUntilDeadline < 20) {
+    riskScore += 24;
     generatedRisks.push({
-      id: 'r_dead_imp',
-      title: 'Impossible Target Launch Date',
+      id: 'r_dead_tight',
+      title: 'Compressed Delivery Schedule',
       category: 'Deadline Risk',
       impact: 'High',
       likelihood: 'High',
-      description: `Target deadline of ${daysUntilDeadline} days is critically compressed.`,
-      reason: `Deadline of ${daysUntilDeadline} days does not allow necessary sprint iterations.`,
-      mitigationStrategy: 'Extend target launch date by 30 days or drastically cut phase 1 scope.'
+      description: `Target deadline of ${daysUntilDeadline} days requires tight sprint execution.`,
+      reason: `Deadline provides minimal buffer for user acceptance testing.`,
+      mitigationStrategy: 'Focus phase 1 on core MVP deliverables and extend secondary features.'
     });
-    copilotRecs.push(`Extend project target deadline beyond ${daysUntilDeadline} days immediately.`);
-  } else if (daysUntilDeadline < 45) {
+    copilotRecs.push(`Extend project target deadline beyond ${daysUntilDeadline} days to allow QA testing.`);
+  } else if (daysUntilDeadline < 40) {
+    riskScore += 10;
     generatedRisks.push({
-      id: 'r_dead_compressed',
-      title: 'Compressed Delivery Timeline',
+      id: 'r_dead_mod',
+      title: 'Moderate Timeline Buffer',
       category: 'Deadline Risk',
-      impact: 'High',
-      likelihood: 'Medium',
-      description: `Target deadline of ${daysUntilDeadline} days provides minimal QA buffer.`,
-      reason: `Timeline requires accelerated sprint cycles.`,
-      mitigationStrategy: 'Conduct daily async standups and enforce strict milestone phase locks.'
+      impact: 'Medium',
+      likelihood: 'Low',
+      description: `Target deadline of ${daysUntilDeadline} days requires active sprint tracking.`,
+      reason: 'Timeline is feasible with daily async standups.',
+      mitigationStrategy: 'Conduct bi-weekly milestone check-ins.'
     });
   }
 
-  if (isHighComplexityDomain) {
+  if (budget < 15000) {
+    riskScore += 14;
     generatedRisks.push({
-      id: 'r_comp',
-      title: 'High Technical & Domain Complexity',
-      category: 'Technical Debt',
-      impact: 'High',
-      likelihood: 'Medium',
-      description: `Project scope spans enterprise, security, or data pipeline architecture requirements.`,
-      reason: `Complex domain rules carry strict compliance and performance benchmarks.`,
-      mitigationStrategy: 'Implement automated linting, security audits, and dedicated staging environments.'
-    });
-  }
-
-  if (budget < budgetThreshold) {
-    generatedRisks.push({
-      id: 'r_budg',
-      title: 'Financial Budget Shortfall',
+      id: 'r_budg_low',
+      title: 'Budget Optimization Needed',
       category: 'Financial Risk',
-      impact: 'High',
-      likelihood: 'Medium',
-      description: `Allocated budget of ₹${budget.toLocaleString('en-IN')} is below the recommended threshold (₹${budgetThreshold.toLocaleString('en-IN')}).`,
-      reason: `Required infrastructure and tooling exceed the current budget allocation.`,
-      mitigationStrategy: 'Increase project budget allocation or scale back non-essential third-party service dependencies.'
+      impact: 'Medium',
+      likelihood: 'Low',
+      description: `Allocated budget of ₹${budget.toLocaleString('en-IN')} requires cost-conscious tool selection.`,
+      reason: 'Lower budget allocation for cloud services.',
+      mitigationStrategy: 'Leverage open-source infrastructure and serverless tiers.'
     });
-    copilotRecs.push(`Increase budget allocation to support enterprise infrastructure.`);
   }
 
-  if (missingSkills.length >= 3) {
-    generatedRisks.push({
-      id: 'r_skill',
-      title: 'Specialized Skill Gap',
-      category: 'Skill Gap',
-      impact: 'High',
-      likelihood: 'High',
-      description: `Specialized domain skills (${missingSkills.slice(0, 3).join(', ').toUpperCase()}) are missing from current team.`,
-      reason: `Current team skillsets do not cover all technical engineering domains required.`,
-      mitigationStrategy: 'Recruit specialized engineers or contract external domain experts for key modules.'
-    });
-    copilotRecs.push(`Recruit missing specialists for ${missingSkills.slice(0, 3).join(', ').toUpperCase()} engineering domains.`);
-  }
-
+  // Standard operational risk if zero risks triggered
   if (generatedRisks.length === 0) {
     generatedRisks.push({
       id: 'r_opt',
-      title: 'Standard Operational Buffer',
+      title: 'Standard Infrastructure Check',
       category: 'Technical Debt',
       impact: 'Low',
       likelihood: 'Low',
-      description: 'Minor latency optimization opportunities in database query indexing.',
-      reason: 'Baseline project parameters are fully supported by current team capacity.',
-      mitigationStrategy: 'Enable Redis caching layers prior to final production release.'
+      description: 'Baseline project parameters are fully supported by active team capacity.',
+      reason: 'Optimal workload and resource allocation.',
+      mitigationStrategy: 'Enable Redis caching layers prior to final production launch.'
     });
   }
+
+  const finalRiskScore = Math.min(75, Math.max(8, Math.round(riskScore)));
+
+  // 3. Positive Additive AI Confidence Calculation (82% - 97% for complete projects)
+  let confidencePts = 84; // Solid baseline
+
+  // Positive Contributions
+  if (goal.length >= 80) confidencePts += 3;
+  if (deliverables.length >= 3) confidencePts += 3;
+  if (teamSize >= 2) confidencePts += 3;
+  if (daysUntilDeadline >= 40) confidencePts += 3;
+  if (budget >= 30000) confidencePts += 2;
+
+  // Gradual Risk Deduction (Max -10 pts)
+  const riskDeduction = Math.round(finalRiskScore * 0.12);
+  let finalConfidenceScore = confidencePts - riskDeduction + microVariance;
+
+  // Boundary Guards: Complete enterprise projects receive 82-97%, compressed receive reasonable ratings
+  if (daysUntilDeadline < 20 && teamSize <= 1) {
+    finalConfidenceScore = Math.min(58, Math.max(45, finalConfidenceScore));
+  } else {
+    finalConfidenceScore = Math.min(98, Math.max(76, finalConfidenceScore));
+  }
+  finalConfidenceScore = Math.round(finalConfidenceScore);
+
+  // 4. Positive Additive Business Health Calculation (85 - 100 for complete projects)
+  let healthPts = 87; // Solid baseline
+
+  if (goal.length >= 60) healthPts += 3;
+  if (deliverables.length >= 2) healthPts += 3;
+  if (teamSize >= 2) healthPts += 3;
+  if (daysUntilDeadline >= 30) healthPts += 2;
+  if (budget >= 25000) healthPts += 2;
+
+  // Gradual Risk Deduction (Max -8 pts)
+  const healthRiskDeduction = Math.round(finalRiskScore * 0.10);
+  let finalHealthScore = healthPts - healthRiskDeduction + microVariance;
+
+  if (daysUntilDeadline < 20 && teamSize <= 1) {
+    finalHealthScore = Math.min(58, Math.max(42, finalHealthScore));
+  } else {
+    finalHealthScore = Math.min(99, Math.max(82, finalHealthScore));
+  }
+  finalHealthScore = Math.round(finalHealthScore);
 
   if (copilotRecs.length === 0) {
     copilotRecs.push('Conduct daily async standups using SprintFlow AI automated progress reports.');
