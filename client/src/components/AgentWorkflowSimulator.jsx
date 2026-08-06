@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Bot, 
   BrainCircuit, 
   ClipboardList, 
   AlertTriangle, 
-  Handshake, 
-  FileText, 
   CheckCircle2, 
   Terminal, 
   Sparkles,
   Target,
-  UserCheck,
-  Zap
+  UserCheck
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playAgentChime, playSuccessFanfare } from '../utils/audio';
@@ -22,138 +19,107 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
   const [logs, setLogs] = useState([]);
   const [isFinished, setIsFinished] = useState(false);
 
-  // Exact 8-step autonomous sequence:
-  // 1. Requirement Analysis
-  // 2. Planner Agent Thinking...
-  // 3. Task Decomposition
-  // 4. Skill Matching
-  // 5. Coordinator Optimization
-  // 6. Risk Analysis
-  // 7. Report Generation
-  // 8. Strategy Ready
-  const agents = [
+  // Exact 5-phase workflow requested:
+  // Phase 1 → Requirement Analysis
+  // Phase 2 → Task Planning
+  // Phase 3 → Task Allocation
+  // Phase 4 → Risk Assessment
+  // Phase 5 → Strategy Complete
+  const phases = [
     {
-      id: 'req',
-      name: 'Requirement Analysis',
+      id: 'p1',
+      name: 'Phase 1: Requirement Analysis',
       icon: Target,
       color: 'from-purple-500 to-indigo-500',
-      borderColor: 'border-purple-500',
-      glow: 'shadow-purple-500/40',
       textColor: 'text-purple-400',
       taskMessage: 'Parsing project goals, budget & deliverables...',
-      logDetail: 'Extracted budget bounds, target launch date, and team constraints.'
+      logDetail: 'Analyzed constraints, budget bounds, and target launch date.'
     },
     {
-      id: 'planner',
-      name: 'Planner Agent Thinking...',
+      id: 'p2',
+      name: 'Phase 2: Task Planning',
       icon: BrainCircuit,
       color: 'from-indigo-500 to-blue-500',
-      borderColor: 'border-indigo-500',
-      glow: 'shadow-indigo-500/40',
       textColor: 'text-indigo-400',
-      taskMessage: 'Deconstructing strategic milestones...',
+      taskMessage: 'Deconstructing milestones & task dependencies...',
       logDetail: 'Established milestone phases with calculated timeline buffers.'
     },
     {
-      id: 'task_decomp',
-      name: 'Task Decomposition',
-      icon: ClipboardList,
-      color: 'from-blue-500 to-cyan-500',
-      borderColor: 'border-blue-500',
-      glow: 'shadow-blue-500/40',
-      textColor: 'text-blue-400',
-      taskMessage: 'Breaking milestones into atomic tasks...',
-      logDetail: 'Generated task dependency graphs and duration estimates.'
-    },
-    {
-      id: 'skill_match',
-      name: 'Skill Matching',
+      id: 'p3',
+      name: 'Phase 3: Task Allocation',
       icon: UserCheck,
-      color: 'from-cyan-500 to-teal-500',
-      borderColor: 'border-cyan-500',
-      glow: 'shadow-cyan-500/40',
+      color: 'from-blue-500 to-cyan-500',
       textColor: 'text-cyan-400',
-      taskMessage: 'Matching employee skillsets & availability...',
+      taskMessage: 'Matching employee skills & workload capacity...',
       logDetail: 'Assigned primary developers with explicit assignment rationales.'
     },
     {
-      id: 'coord',
-      name: 'Coordinator Optimization',
-      icon: Handshake,
-      color: 'from-teal-500 to-emerald-500',
-      borderColor: 'border-teal-500',
-      glow: 'shadow-teal-500/40',
-      textColor: 'text-teal-400',
-      taskMessage: 'Calculating critical path & workload balance...',
-      logDetail: 'Synchronized sprint cadence and removed execution bottlenecks.'
-    },
-    {
-      id: 'risk',
-      name: 'Risk Analysis',
+      id: 'p4',
+      name: 'Phase 4: Risk Assessment',
       icon: AlertTriangle,
       color: 'from-amber-500 to-rose-500',
-      borderColor: 'border-rose-500',
-      glow: 'shadow-rose-500/40',
       textColor: 'text-rose-400',
-      taskMessage: 'Evaluating dynamic risk vectors & 2x2 Heatmap...',
-      logDetail: 'Calculated dynamic risk score, AI confidence, and health metrics.'
+      taskMessage: 'Evaluating dynamic risk vectors & safeguards...',
+      logDetail: 'Populated 2x2 Heatmap matrix, AI confidence, and health metrics.'
     },
     {
-      id: 'report',
-      name: 'Report Generation',
-      icon: FileText,
+      id: 'p5',
+      name: 'Phase 5: Strategy Complete',
+      icon: CheckCircle2,
       color: 'from-emerald-500 to-green-500',
-      borderColor: 'border-emerald-500',
-      glow: 'shadow-emerald-500/40',
       textColor: 'text-emerald-400',
-      taskMessage: 'Compiling README, meeting notes & deck outlines...',
-      logDetail: 'Synthesized exportable project artifacts and documentation.'
+      taskMessage: 'Compiling documentation & executive reports...',
+      logDetail: 'Synthesized README, Kickoff Notes, Status Report & Pitch Deck.'
     }
   ];
 
   useEffect(() => {
-    let timer;
-    if (currentStepIndex < agents.length) {
-      const activeAgent = agents[currentStepIndex];
-      
-      playAgentChime(450 + currentStepIndex * 90);
+    let isCancelled = false;
 
-      setLogs((prev) => [
-        ...prev,
-        {
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          agent: activeAgent.name,
-          message: activeAgent.taskMessage,
-          detail: activeAgent.logDetail,
-          color: activeAgent.textColor
-        }
-      ]);
+    const runSequence = async () => {
+      for (let i = 0; i < phases.length; i++) {
+        if (isCancelled) break;
+        setCurrentStepIndex(i);
 
-      // Realistic continuous step timing (1.1s per step)
-      timer = setTimeout(() => {
-        setCurrentStepIndex((prev) => prev + 1);
-      }, 1100);
-    } else if (currentStepIndex === agents.length && !isFinished) {
-      setIsFinished(true);
-      
-      playSuccessFanfare();
-      try {
-        confetti({
-          particleCount: 120,
-          spread: 90,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
+        const phase = phases[i];
+        playAgentChime(500 + i * 120);
 
-      if (onComplete) {
-        setTimeout(() => {
-          onComplete();
-        }, 1000);
+        setLogs((prev) => [
+          ...prev,
+          {
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            agent: phase.name,
+            message: phase.taskMessage,
+            detail: phase.logDetail,
+            color: phase.textColor
+          }
+        ]);
+
+        // Await 1.2s delay for smooth, continuous progress
+        await new Promise((resolve) => setTimeout(resolve, 1200));
       }
-    }
 
-    return () => clearTimeout(timer);
-  }, [currentStepIndex]);
+      if (!isCancelled) {
+        setIsFinished(true);
+        playSuccessFanfare();
+        try {
+          confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+        } catch (e) {}
+
+        if (onComplete) {
+          setTimeout(() => {
+            onComplete();
+          }, 800);
+        }
+      }
+    };
+
+    runSequence();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   return (
     <div className={`w-full max-w-4xl mx-auto p-6 rounded-3xl glass-panel border border-purple-500/40 bg-[#0B0F19]/95 text-white shadow-2xl relative overflow-hidden ${isLiveModal ? 'my-4' : ''}`}>
@@ -172,69 +138,69 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
             <div className="flex items-center space-x-2">
               <h3 className="font-extrabold text-lg text-white">Autonomous AI Planning Engine</h3>
               <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-mono font-bold animate-pulse">
-                REAL-TIME REASONING
+                GEMINI 2.5 ACTIVE
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Orchestrating AI Swarm for <span className="text-purple-300 font-semibold">{projectName || 'Project Strategy'}</span>
+              Orchestrating 5-Phase Strategy for <span className="text-purple-300 font-semibold">{projectName || 'Project Strategy'}</span>
             </p>
           </div>
         </div>
 
         <div className="text-right">
           <span className="text-xs font-mono text-slate-400">
-            {isFinished ? 'Strategy Ready 🟢' : `Phase ${Math.min(currentStepIndex + 1, 8)} / 8`}
+            {isFinished ? 'Strategy Complete 🟢' : `Phase ${Math.min(currentStepIndex + 1, 5)} / 5`}
           </span>
           <div className="w-36 bg-slate-800 h-2.5 rounded-full mt-1 overflow-hidden">
             <motion.div 
-              className="bg-gradient-to-r from-purple-500 via-cyan-500 to-emerald-400 h-full"
+              className="bg-gradient-to-r from-purple-500 via-indigo-500 to-emerald-400 h-full"
               initial={{ width: 0 }}
-              animate={{ width: `${(Math.min(currentStepIndex + (isFinished ? 1 : 0), 8) / 8) * 100}%` }}
+              animate={{ width: `${(Math.min(currentStepIndex + 1, 5) / 5) * 100}%` }}
               transition={{ duration: 0.3 }}
             />
           </div>
         </div>
       </div>
 
-      {/* 7 Agent Nodes Graph + Final State */}
-      <div className="py-8 grid grid-cols-7 gap-2 relative">
+      {/* 5 Phase Graph */}
+      <div className="py-8 grid grid-cols-5 gap-3 relative">
         {/* Connecting Line */}
-        <div className="absolute top-1/2 left-6 right-6 h-0.5 bg-slate-800 -translate-y-6 z-0"></div>
+        <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-slate-800 -translate-y-6 z-0"></div>
         <motion.div 
-          className="absolute top-1/2 left-6 h-0.5 bg-gradient-to-r from-purple-500 via-cyan-500 to-emerald-500 -translate-y-6 z-0"
+          className="absolute top-1/2 left-8 h-0.5 bg-gradient-to-r from-purple-500 via-cyan-500 to-emerald-500 -translate-y-6 z-0"
           initial={{ width: 0 }}
-          animate={{ width: `${(currentStepIndex / 6) * 88}%` }}
+          animate={{ width: `${(currentStepIndex / 4) * 85}%` }}
           transition={{ duration: 0.3 }}
         />
 
-        {agents.map((agent, index) => {
-          const Icon = agent.icon;
+        {phases.map((phase, index) => {
+          const Icon = phase.icon;
           const isActive = index === currentStepIndex;
           const isDone = index < currentStepIndex || isFinished;
 
           return (
-            <div key={agent.id} className="flex flex-col items-center text-center z-10">
+            <div key={phase.id} className="flex flex-col items-center text-center z-10">
               <motion.div
                 initial={false}
                 animate={{
                   scale: isActive ? 1.15 : isDone ? 1 : 0.9,
                   opacity: isDone || isActive ? 1 : 0.4
                 }}
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all ${
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${
                   isDone 
                     ? 'bg-slate-900 border-emerald-500/60 text-emerald-400 shadow-lg shadow-emerald-500/20' 
                     : isActive 
-                      ? `bg-gradient-to-br ${agent.color} border-white text-white ${agent.glow} shadow-xl ring-4 ring-purple-500/20` 
+                      ? `bg-gradient-to-br ${phase.color} border-white text-white shadow-xl ring-4 ring-purple-500/20` 
                       : 'bg-slate-900/80 border-slate-800 text-slate-500'
                 }`}
               >
-                {isDone ? <CheckCircle2 className="w-4.5 h-4.5" /> : <Icon className="w-4.5 h-4.5" />}
+                {isDone ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </motion.div>
 
-              <span className={`text-[10px] font-bold mt-2 font-mono transition-colors leading-tight ${
+              <span className={`text-[11px] font-bold mt-2 font-mono transition-colors ${
                 isActive ? 'text-white' : isDone ? 'text-slate-300' : 'text-slate-500'
               }`}>
-                {agent.name}
+                {phase.name}
               </span>
 
               {isActive && (
@@ -256,9 +222,9 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
         <div className="flex items-center justify-between text-slate-400 border-b border-slate-800/80 pb-2">
           <div className="flex items-center space-x-2">
             <Terminal className="w-4 h-4 text-purple-400" />
-            <span className="font-bold text-slate-300">Autonomous Real-Time Agent Telemetry</span>
+            <span className="font-bold text-slate-300">Live Agent Execution Telemetry</span>
           </div>
-          <span className="text-[10px] text-emerald-400 animate-pulse">REASONING LIVE</span>
+          <span className="text-[10px] text-emerald-400 animate-pulse">STREAMING LIVE</span>
         </div>
 
         <div className="space-y-1.5 pt-1">
@@ -282,7 +248,7 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
               className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center space-x-2 mt-2"
             >
               <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" />
-              <span>🎉 Strategy Ready! Redirecting to Dashboard...</span>
+              <span>🎉 Strategy Complete! Redirecting to Dashboard...</span>
             </motion.div>
           )}
         </div>
