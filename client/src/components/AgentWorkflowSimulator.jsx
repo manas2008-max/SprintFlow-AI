@@ -10,6 +10,7 @@ import {
   CheckCircle2, 
   Terminal, 
   Sparkles,
+  Target,
   Zap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -20,40 +21,40 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
   const [logs, setLogs] = useState([]);
   const [isFinished, setIsFinished] = useState(false);
 
-  // Exact step wording & icons as requested
+  // Exact step sequence: Requirement Analysis -> Planner Agent -> Task Agent -> Coordinator Agent -> Risk Agent -> Report Agent -> Strategy Generated
   const agents = [
     {
-      id: 'planner',
-      name: 'Planner Agent',
-      icon: BrainCircuit,
+      id: 'req',
+      name: 'Requirement Analysis',
+      icon: Target,
       color: 'from-purple-500 to-indigo-500',
       borderColor: 'border-purple-500',
       glow: 'shadow-purple-500/40',
       textColor: 'text-purple-400',
-      taskMessage: 'Analyzing business objectives...',
-      logDetail: 'Analyzed goals & established 3 agile milestones with timeline buffers.'
+      taskMessage: 'Parsing project objectives & deliverables...',
+      logDetail: 'Extracted budget bounds, target launch date, and team capacity constraints.'
+    },
+    {
+      id: 'planner',
+      name: 'Planner Agent',
+      icon: BrainCircuit,
+      color: 'from-indigo-500 to-blue-500',
+      borderColor: 'border-indigo-500',
+      glow: 'shadow-indigo-500/40',
+      textColor: 'text-indigo-400',
+      taskMessage: 'Deconstructing milestones...',
+      logDetail: 'Established 3 agile milestone phases with timeline buffers.'
     },
     {
       id: 'task',
       name: 'Task Agent',
       icon: ClipboardList,
-      color: 'from-indigo-500 to-blue-500',
-      borderColor: 'border-indigo-500',
-      glow: 'shadow-indigo-500/40',
-      textColor: 'text-indigo-400',
-      taskMessage: 'Assigning responsibilities...',
+      color: 'from-blue-500 to-cyan-500',
+      borderColor: 'border-blue-500',
+      glow: 'shadow-blue-500/40',
+      textColor: 'text-blue-400',
+      taskMessage: 'Assigning team members...',
       logDetail: 'Matched team member skills and generated rationale for every assignment.'
-    },
-    {
-      id: 'risk',
-      name: 'Risk Agent',
-      icon: AlertTriangle,
-      color: 'from-amber-500 to-rose-500',
-      borderColor: 'border-rose-500',
-      glow: 'shadow-rose-500/40',
-      textColor: 'text-rose-400',
-      taskMessage: 'Evaluating dependencies...',
-      logDetail: 'Detected deadline pressures & budget bounds. Embedded mitigation strategies.'
     },
     {
       id: 'coordinator',
@@ -63,8 +64,19 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
       borderColor: 'border-cyan-500',
       glow: 'shadow-cyan-500/40',
       textColor: 'text-cyan-400',
-      taskMessage: 'Optimizing workflow...',
+      taskMessage: 'Optimizing critical path...',
       logDetail: 'Calculated project critical path and established sprint synchronization.'
+    },
+    {
+      id: 'risk',
+      name: 'Risk Agent',
+      icon: AlertTriangle,
+      color: 'from-amber-500 to-rose-500',
+      borderColor: 'border-rose-500',
+      glow: 'shadow-rose-500/40',
+      textColor: 'text-rose-400',
+      taskMessage: 'Evaluating dynamic risk vectors...',
+      logDetail: 'Populated 2x2 Heatmap matrix and dynamic action safeguards.'
     },
     {
       id: 'report',
@@ -74,7 +86,7 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
       borderColor: 'border-emerald-500',
       glow: 'shadow-emerald-500/40',
       textColor: 'text-emerald-400',
-      taskMessage: 'Preparing project documentation...',
+      taskMessage: 'Compiling executive reports...',
       logDetail: 'Compiled README.md, meeting notes, status reports & pitch deck outlines.'
     }
   ];
@@ -85,7 +97,7 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
       const activeAgent = agents[currentStepIndex];
       
       // Play audio chime
-      playAgentChime(500 + currentStepIndex * 120);
+      playAgentChime(500 + currentStepIndex * 100);
 
       // Append log entry
       setLogs((prev) => [
@@ -99,9 +111,10 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
         }
       ]);
 
+      // Step continuously every 1.2s without freezing
       timer = setTimeout(() => {
         setCurrentStepIndex((prev) => prev + 1);
-      }, 1500);
+      }, 1200);
     } else if (currentStepIndex === agents.length && !isFinished) {
       setIsFinished(true);
       
@@ -118,7 +131,7 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
       if (onComplete) {
         setTimeout(() => {
           onComplete();
-        }, 1200);
+        }, 1000);
       }
     }
 
@@ -140,125 +153,119 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-extrabold text-lg text-white">Autonomous Agent Mesh Engine</h3>
+              <h3 className="font-extrabold text-lg text-white">Autonomous AI Planning Engine</h3>
               <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-mono font-bold animate-pulse">
                 GEMINI 2.5 ACTIVE
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Orchestrating 5 AI Agents for <span className="text-purple-300 font-semibold">{projectName || 'Project Strategy'}</span>
+              Orchestrating 6 AI Agents for <span className="text-purple-300 font-semibold">{projectName || 'Project Strategy'}</span>
             </p>
           </div>
         </div>
 
         <div className="text-right">
-          <span className="text-xs font-mono text-slate-400">Phase {Math.min(currentStepIndex + 1, 5)} / 5</span>
+          <span className="text-xs font-mono text-slate-400">
+            {isFinished ? 'Strategy Generated 🟢' : `Phase ${Math.min(currentStepIndex + 1, 6)} / 6`}
+          </span>
           <div className="w-36 bg-slate-800 h-2.5 rounded-full mt-1 overflow-hidden">
             <motion.div 
               className="bg-gradient-to-r from-purple-500 via-indigo-500 to-emerald-400 h-full"
               initial={{ width: 0 }}
-              animate={{ width: `${(Math.min(currentStepIndex + 1, 5) / 5) * 100}%` }}
+              animate={{ width: `${(Math.min(currentStepIndex + (isFinished ? 1 : 0), 6) / 6) * 100}%` }}
               transition={{ duration: 0.4 }}
             />
           </div>
         </div>
       </div>
 
-      {/* 5 Agent Nodes Graph */}
-      <div className="py-8 grid grid-cols-5 gap-3 relative">
+      {/* 6 Agent Nodes Graph */}
+      <div className="py-8 grid grid-cols-6 gap-2 relative">
         {/* Connecting Line */}
-        <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-slate-800 -translate-y-6 z-0"></div>
+        <div className="absolute top-1/2 left-6 right-6 h-0.5 bg-slate-800 -translate-y-6 z-0"></div>
         <motion.div 
-          className="absolute top-1/2 left-8 h-0.5 bg-gradient-to-r from-purple-500 via-cyan-500 to-emerald-500 -translate-y-6 z-0"
+          className="absolute top-1/2 left-6 h-0.5 bg-gradient-to-r from-purple-500 via-cyan-500 to-emerald-500 -translate-y-6 z-0"
           initial={{ width: 0 }}
-          animate={{ width: `${(currentStepIndex / 4) * 85}%` }}
+          animate={{ width: `${(currentStepIndex / 5) * 88}%` }}
           transition={{ duration: 0.4 }}
         />
 
         {agents.map((agent, index) => {
           const Icon = agent.icon;
           const isActive = index === currentStepIndex;
-          const isDone = index < currentStepIndex;
+          const isDone = index < currentStepIndex || isFinished;
 
           return (
-            <div key={agent.id} className="flex flex-col items-center text-center z-10 relative">
+            <div key={agent.id} className="flex flex-col items-center text-center z-10">
               <motion.div
-                initial={{ scale: 0.9, opacity: 0.7 }}
-                animate={{ 
-                  scale: isActive ? 1.18 : isDone ? 1 : 0.95,
-                  opacity: isActive || isDone ? 1 : 0.5
+                initial={false}
+                animate={{
+                  scale: isActive ? 1.15 : isDone ? 1 : 0.9,
+                  opacity: isDone || isActive ? 1 : 0.4
                 }}
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${
                   isDone 
-                    ? 'bg-slate-900 border-2 border-emerald-500 shadow-lg shadow-emerald-500/20 text-emerald-400' 
+                    ? 'bg-slate-900 border-emerald-500/60 text-emerald-400 shadow-lg shadow-emerald-500/20' 
                     : isActive 
-                      ? `bg-slate-900 border-2 ${agent.borderColor} shadow-2xl ${agent.glow} text-white ring-4 ring-purple-500/20` 
-                      : 'bg-slate-950 border border-slate-800 text-slate-600'
+                      ? `bg-gradient-to-br ${agent.color} border-white text-white ${agent.glow} shadow-xl ring-4 ring-purple-500/20` 
+                      : 'bg-slate-900/80 border-slate-800 text-slate-500'
                 }`}
               >
-                {isDone ? (
-                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                ) : (
-                  <Icon className={`w-6 h-6 ${isActive ? agent.textColor : 'text-slate-500'}`} />
-                )}
+                {isDone ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </motion.div>
 
-              <span className={`text-xs font-semibold mt-3 ${isActive ? 'text-white' : isDone ? 'text-slate-300' : 'text-slate-500'}`}>
+              <span className={`text-[11px] font-bold mt-2 font-mono transition-colors ${
+                isActive ? 'text-white' : isDone ? 'text-slate-300' : 'text-slate-500'
+              }`}>
                 {agent.name}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono mt-0.5 max-w-[120px]">
-                {isDone ? 'Completed' : isActive ? agent.taskMessage : 'Pending'}
-              </span>
+
+              {isActive && (
+                <motion.span 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[9px] font-mono text-purple-400 font-bold mt-0.5 animate-pulse"
+                >
+                  Processing...
+                </motion.span>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Terminal Reasoning Stream */}
-      <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-4 font-mono text-xs space-y-2">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-500">
+      {/* Terminal Log Stream */}
+      <div className="p-4 rounded-2xl bg-black/60 border border-slate-800 font-mono text-xs space-y-2 h-44 overflow-y-auto">
+        <div className="flex items-center justify-between text-slate-400 border-b border-slate-800/80 pb-2">
           <div className="flex items-center space-x-2">
             <Terminal className="w-4 h-4 text-purple-400" />
-            <span className="font-semibold text-slate-300">Agent Reasoning Stream</span>
+            <span className="font-bold text-slate-300">Live Agent Execution Telemetry</span>
           </div>
-          <span className="text-[10px]">Gemini 2.5 Multi-Agent Protocol</span>
+          <span className="text-[10px] text-emerald-400 animate-pulse">STREAMING LIVE</span>
         </div>
 
-        <div className="h-44 overflow-y-auto space-y-2 pr-1 pt-1">
+        <div className="space-y-1.5 pt-1">
           {logs.map((log, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-start space-x-3 text-slate-300"
+              className="flex items-start space-x-2 text-[11px] leading-relaxed"
             >
-              <span className="text-slate-500 text-[10px] pt-0.5">[{log.time}]</span>
-              <span className={`font-bold ${log.color}`}>[{log.agent}]:</span>
-              <div className="flex-1">
-                <p className="text-slate-200">{log.message}</p>
-                <p className="text-slate-500 text-[11px] mt-0.5">↳ {log.detail}</p>
-              </div>
+              <span className="text-slate-500 text-[10px] shrink-0">[{log.time}]</span>
+              <span className={`font-bold shrink-0 ${log.color}`}>{log.agent}:</span>
+              <span className="text-slate-300">{log.message}</span>
+              <span className="text-slate-400 hidden sm:inline">— {log.detail}</span>
             </motion.div>
           ))}
-
-          {!isFinished && (
-            <div className="flex items-center space-x-2 text-purple-400 pt-1 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-              <span>Agents collaborating...</span>
-            </div>
-          )}
-
           {isFinished && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-between mt-2 font-sans font-bold text-sm"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center space-x-2 mt-2"
             >
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span>✅ Project execution plan generated successfully.</span>
-              </div>
-              <Sparkles className="w-4 h-4 text-emerald-300 animate-spin" />
+              <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" />
+              <span>🎉 Strategy Generated Successfully! Redirecting to Dashboard...</span>
             </motion.div>
           )}
         </div>
