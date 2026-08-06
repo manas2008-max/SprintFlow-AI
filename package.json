@@ -1,0 +1,26 @@
+{
+  "name": "sprintflow-ai",
+  "version": "1.0.0",
+  "description": "Autonomous AI Project Manager for Modern Businesses",
+  "main": "server/server.js",
+  "scripts": {
+    "setup": "npm install && cd server && npm install && cd ../client && npm install",
+    "start": "node server/server.js",
+    "server": "node server/server.js",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": [
+    "ai",
+    "agentic-ai",
+    "project-management",
+    "gemini",
+    "react",
+    "express"
+  ],
+  "author": "SprintFlow AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
