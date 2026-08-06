@@ -75,11 +75,18 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
 
   useEffect(() => {
     let isCancelled = false;
+    console.log('[DEBUG AgentWorkflowSimulator] MOUNTED');
 
     const runSequence = async () => {
       for (let i = 0; i < phases.length; i++) {
-        if (isCancelled) break;
+        if (isCancelled) {
+          console.log(`[DEBUG AgentWorkflowSimulator] Loop cancelled at step i = ${i}`);
+          break;
+        }
+
+        console.log(`[DEBUG AgentWorkflowSimulator] BEFORE setCurrentStepIndex(${i}) - Phase: ${phases[i].name}`);
         setCurrentStepIndex(i);
+        console.log(`[DEBUG AgentWorkflowSimulator] AFTER setCurrentStepIndex(${i})`);
 
         const phase = phases[i];
         playAgentChime(500 + i * 120);
@@ -95,11 +102,13 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
           }
         ]);
 
-        // Await 1.2s delay for smooth, continuous progress
+        console.log(`[DEBUG AgentWorkflowSimulator] START await timeout for step i = ${i}`);
         await new Promise((resolve) => setTimeout(resolve, 1200));
+        console.log(`[DEBUG AgentWorkflowSimulator] END await timeout for step i = ${i}, isCancelled = ${isCancelled}`);
       }
 
       if (!isCancelled) {
+        console.log('[DEBUG AgentWorkflowSimulator] ALL 5 PHASES COMPLETED SUCCESSFULLY!');
         setIsFinished(true);
         playSuccessFanfare();
         try {
@@ -107,6 +116,7 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
         } catch (e) {}
 
         if (onComplete) {
+          console.log('[DEBUG AgentWorkflowSimulator] Calling onComplete() callback...');
           setTimeout(() => {
             onComplete();
           }, 800);
@@ -117,6 +127,7 @@ export default function AgentWorkflowSimulator({ projectName, onComplete, isLive
     runSequence();
 
     return () => {
+      console.log('[DEBUG AgentWorkflowSimulator] UNMOUNTED - Setting isCancelled = true');
       isCancelled = true;
     };
   }, []);

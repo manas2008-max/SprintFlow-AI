@@ -192,12 +192,7 @@ export default function CreateProjectPage() {
       if (res.data && res.data.success && res.data.project) {
         const pid = res.data.project.id || res.data.project._id;
         setCreatedProjectId(pid);
-        setGenerationStep(7); // Redirecting to Dashboard step
-        console.log('[CREATE_PROJECT_PAGE] 4. Returned Project UUID:', pid);
-        
-        setTimeout(() => {
-          navigate(`/projects/${pid}`);
-        }, 1500);
+        console.log('[CREATE_PROJECT_PAGE] Returned Project UUID:', pid, '- Waiting for AgentWorkflowSimulator to complete 5 phases before navigating.');
       } else {
         const dbErr = res.data?.message || 'Database project generation failed.';
         console.error('[CREATE_PROJECT_PAGE] Project Generation Error:', dbErr);
