@@ -5,8 +5,8 @@ const { runMultiAgentWorkflow } = require('../services/agentEngine');
 // Memory store fallback when Supabase is unconfigured
 const memoryProjects = [];
 
-// Helper to ensure demo user exists in Supabase users table before inserting project
-async function ensureUserExistsInSupabase(supabase, userId) {
+// Helper to ensure user exists in Supabase users table before inserting project
+async function ensureUserExistsInSupabase(supabase, userId, reqUser) {
   const { data: user } = await supabase
     .from('users')
     .select('id')
@@ -20,11 +20,11 @@ async function ensureUserExistsInSupabase(supabase, userId) {
     .from('users')
     .insert([{
       id: userId,
-      name: 'Alex Mercer',
-      email: 'alex@sprintflow.ai',
-      password_hash: '$2a$10$7v8P0qWkY3mZ7...mock',
-      role: 'manager',
-      company_name: 'SprintFlow Enterprise'
+      name: reqUser?.name || 'User',
+      email: reqUser?.email || `user_${userId.substring(0, 8)}@sprintflow.ai`,
+      password_hash: 'managed_by_supabase_auth',
+      role: reqUser?.role || 'manager',
+      company_name: reqUser?.companyName || 'SprintFlow Enterprise'
     }])
     .select()
     .single();
@@ -84,7 +84,7 @@ const createProject = async (req, res) => {
       const supabase = getSupabase();
 
       // Ensure valid foreign key user_id exists in users table
-      await ensureUserExistsInSupabase(supabase, userId);
+      await ensureUserExistsInSupabase(supabase, userId, req.user);
 
       // 1. Insert into projects table
       const projectRow = {
@@ -201,7 +201,7 @@ const createProject = async (req, res) => {
         await supabase.from('activity_logs').insert(logRows);
       }
 
-      // Fetch full assembled project to confirm lookup query works
+      // Fetch full assembled project
       const fullProject = await fetchFullProjectFromSupabase(projectId);
 
       console.log(`[CREATE_PROJECT] Final Assembled Project Payload Ready for UUID: ${projectId}`);
@@ -246,16 +246,22 @@ const createProject = async (req, res) => {
   }
 };
 
+/**
+ * GET PROJECTS - STRICT DATA ISOLATION PER AUTHENTICATED USER
+ */
 const getProjects = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log(`[GET_PROJECTS] Querying projects for user_id: ${userId}`);
+    console.log(`[GET_PROJECTS] Querying projects for authenticated user_id: ${userId}`);
 
     if (getIsConfigured()) {
       const supabase = getSupabase();
+
+      // Query ONLY projects created by this specific user
       const { data: projectRows, error } = await supabase
         .from('projects')
-        .select('id, created_at')
+        .select('id, created_at, user_id')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -263,7 +269,7 @@ const getProjects = async (req, res) => {
         throw error;
       }
 
-      console.log(`[GET_PROJECTS] Found ${projectRows?.length || 0} project records in Supabase.`);
+      console.log(`[GET_PROJECTS] Found ${projectRows?.length || 0} isolated project records for user_id: ${userId}`);
       if (!projectRows || projectRows.length === 0) {
         return res.json({ success: true, projects: [] });
       }
@@ -278,35 +284,46 @@ const getProjects = async (req, res) => {
 
       return res.json({ success: true, projects: validProjects });
     } else {
-      const sortedMem = [...memoryProjects].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
-      return res.json({ success: true, projects: sortedMem });
+      const userProjects = memoryProjects
+        .filter(p => p.userId === userId)
+        .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+      return res.json({ success: true, projects: userProjects });
     }
   } catch (error) {
     console.error('[GET_PROJECTS Error]', error);
-    const sortedMem = [...memoryProjects].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
-    return res.json({ success: true, projects: sortedMem });
+    return res.json({ success: true, projects: [] });
   }
 };
 
+/**
+ * GET PROJECT BY ID - STRICT OWNERSHIP CHECK
+ */
 const getProjectById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`[GET_PROJECT_BY_ID] Looking up project UUID: '${id}'`);
+    const userId = req.user.id;
+    console.log(`[GET_PROJECT_BY_ID] Looking up project UUID: '${id}' for user: ${userId}`);
 
     if (getIsConfigured()) {
       const project = await fetchFullProjectFromSupabase(id);
       if (!project) {
-        console.warn(`[GET_PROJECT_BY_ID] Project Not Found in Supabase for UUID: '${id}'`);
-        const memProj = memoryProjects.find(p => p.id === id || p._id === id);
-        if (memProj) return res.json({ success: true, project: memProj });
         return res.status(404).json({ success: false, message: `Project Not Found for ID: ${id}` });
       }
-      console.log(`[GET_PROJECT_BY_ID] Project Found! Name: '${project.name}'`);
+
+      // Strict Ownership Check
+      if (project.userId !== userId) {
+        console.warn(`[GET_PROJECT_BY_ID Access Denied] User '${userId}' attempted to access project '${id}' owned by '${project.userId}'`);
+        return res.status(403).json({ success: false, message: 'Access Denied: You do not have permission to view this project.' });
+      }
+
       return res.json({ success: true, project });
     } else {
       const project = memoryProjects.find(p => p.id === id || p._id === id);
       if (!project) {
         return res.status(404).json({ success: false, message: `Project Not Found for ID: ${id}` });
+      }
+      if (project.userId !== userId) {
+        return res.status(403).json({ success: false, message: 'Access Denied: You do not have permission to view this project.' });
       }
       return res.json({ success: true, project });
     }
@@ -316,13 +333,29 @@ const getProjectById = async (req, res) => {
   }
 };
 
+/**
+ * UPDATE TASK STATUS - STRICT OWNERSHIP CHECK
+ */
 const updateTaskStatus = async (req, res) => {
   try {
     const { id, taskId } = req.params;
     const { status } = req.body;
+    const userId = req.user.id;
 
     if (getIsConfigured()) {
       const supabase = getSupabase();
+
+      // Verify project ownership
+      const { data: projectRow } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!projectRow || projectRow.user_id !== userId) {
+        return res.status(403).json({ success: false, message: 'Access Denied: You cannot modify this project.' });
+      }
+
       await supabase
         .from('tasks')
         .update({ status, updated_at: new Date().toISOString() })
@@ -332,7 +365,7 @@ const updateTaskStatus = async (req, res) => {
       return res.json({ success: true, project: updatedProject });
     } else {
       const project = memoryProjects.find(p => p.id === id || p._id === id);
-      if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+      if (!project || project.userId !== userId) return res.status(403).json({ success: false, message: 'Access Denied' });
       const task = project.tasks.find(t => t.id === taskId || t._id === taskId);
       if (task) task.status = status;
       return res.json({ success: true, project });
@@ -343,14 +376,30 @@ const updateTaskStatus = async (req, res) => {
   }
 };
 
+/**
+ * DELETE PROJECT - STRICT OWNERSHIP CHECK
+ */
 const deleteProject = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
+
     if (getIsConfigured()) {
       const supabase = getSupabase();
-      await supabase.from('projects').delete().eq('id', id);
+
+      const { data: projectRow } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!projectRow || projectRow.user_id !== userId) {
+        return res.status(403).json({ success: false, message: 'Access Denied: You cannot delete this project.' });
+      }
+
+      await supabase.from('projects').delete().eq('id', id).eq('user_id', userId);
     } else {
-      const index = memoryProjects.findIndex(p => p.id === id || p._id === id);
+      const index = memoryProjects.findIndex(p => (p.id === id || p._id === id) && p.userId === userId);
       if (index !== -1) memoryProjects.splice(index, 1);
     }
     return res.json({ success: true, message: 'Project deleted successfully' });
