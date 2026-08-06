@@ -47,8 +47,18 @@ export default function CreateProjectPage() {
 
   const [isSimulating, setIsSimulating] = useState(false);
   const [createdProjectId, setCreatedProjectId] = useState(null);
+  const [isAnimationFinished, setIsAnimationFinished] = useState(false);
   const [error, setError] = useState('');
   const [generationStep, setGenerationStep] = useState(1);
+
+  // Synchronized effect to close modal & navigate ONLY when both 5-phase animation and API creation complete
+  useEffect(() => {
+    if (isAnimationFinished && createdProjectId) {
+      console.log('[CREATE_PROJECT_PAGE] Both 5-phase animation & backend creation complete. Unmounting modal & redirecting to:', `/projects/${createdProjectId}`);
+      setIsSimulating(false);
+      navigate(`/projects/${createdProjectId}`);
+    }
+  }, [isAnimationFinished, createdProjectId, navigate]);
 
   const presets = [
     {
@@ -170,6 +180,8 @@ export default function CreateProjectPage() {
 
     console.log('[CREATE_PROJECT_PAGE] 1. Validating input parameters...', payload);
     setGenerationStep(1);
+    setCreatedProjectId(null);
+    setIsAnimationFinished(false);
     setIsSimulating(true);
 
     // Timeout guard (30 Seconds Max) to prevent infinite loading
@@ -192,7 +204,7 @@ export default function CreateProjectPage() {
       if (res.data && res.data.success && res.data.project) {
         const pid = res.data.project.id || res.data.project._id;
         setCreatedProjectId(pid);
-        console.log('[CREATE_PROJECT_PAGE] Returned Project UUID:', pid, '- Waiting for AgentWorkflowSimulator to complete 5 phases before navigating.');
+        console.log('[CREATE_PROJECT_PAGE] Returned Project UUID:', pid, '- Stored in state for sync effect.');
       } else {
         const dbErr = res.data?.message || 'Database project generation failed.';
         console.error('[CREATE_PROJECT_PAGE] Project Generation Error:', dbErr);
@@ -213,10 +225,8 @@ export default function CreateProjectPage() {
   };
 
   const handleSimulationFinished = () => {
-    if (createdProjectId) {
-      console.log('[CREATE_PROJECT_PAGE] Navigating to created project:', `/projects/${createdProjectId}`);
-      navigate(`/projects/${createdProjectId}`);
-    }
+    console.log('[CREATE_PROJECT_PAGE] 5-phase simulation finished, setting isAnimationFinished = true');
+    setIsAnimationFinished(true);
   };
 
   return (
