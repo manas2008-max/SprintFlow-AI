@@ -1,7 +1,8 @@
-import axios from 'axios';
+const PROD_BACKEND_URL = 'https://sprintflow-ai.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === 'production' ? PROD_BACKEND_URL : '/api');
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
