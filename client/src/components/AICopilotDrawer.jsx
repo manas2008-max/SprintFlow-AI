@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Sparkles, Send, X, Terminal, CheckCircle2, MessageSquare, Zap } from 'lucide-react';
 import { playAgentChime } from '../utils/audio';
@@ -13,6 +13,25 @@ export default function AICopilotDrawer({ project }) {
       time: 'Just now'
     }
   ]);
+
+  // Synchronize initial welcome message when project prop resolves
+  useEffect(() => {
+    if (project?.name) {
+      setMessages(prev => {
+        if (prev.length === 1 && prev[0].sender === 'agent') {
+          return [
+            {
+              sender: 'agent',
+              name: 'SprintFlow Assistant',
+              text: `Hello! I am your AI Project Manager Co-Pilot for '${project.name}'. Ask me anything about critical path, risk mitigation, or task rationale!`,
+              time: 'Just now'
+            }
+          ];
+        }
+        return prev;
+      });
+    }
+  }, [project?.name]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
