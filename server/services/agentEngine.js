@@ -15,19 +15,9 @@ async function runMultiAgentWorkflow(projectInput) {
 
   if (apiKey && apiKey.trim().length > 5) {
     try {
-      console.log('[Agent Orchestrator] Invoking Google Gemini API for multi-agent reasoning...');
+      console.log('[Agent Orchestrator] Stage 2: Calling Gemini AI Multi-Agent Swarm...');
       const genAI = new GoogleGenerativeAI(apiKey);
-      const modelNames = ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-pro'];
-      let model = null;
-      for (const mName of modelNames) {
-        try {
-          model = genAI.getGenerativeModel({ model: mName });
-          break;
-        } catch (mErr) {
-          console.warn(`Model ${mName} initialization skipped:`, mErr.message);
-        }
-      }
-      if (!model) model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       
       const prompt = `You are SprintFlow AI's Autonomous Multi-Agent Project Management System.
 Analyze the following project and generate a structured JSON strategy created collaboratively by 5 specialized AI agents.
@@ -146,19 +136,25 @@ Perform multi-agent collaboration and return ONLY a single valid JSON object mat
   ]
 }`;
 
-      const result = await model.generateContent(prompt);
+      // Enforce strict 10-second timeout for Gemini API call to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Gemini API call exceeded 10-second timeout')), 10000)
+      );
+
+      const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
       const response = await result.response;
       const text = response.text();
       const cleanJsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       aiGeneratedData = JSON.parse(cleanJsonStr);
       console.log('[Agent Orchestrator] Gemini AI multi-agent plan generated successfully!');
     } catch (err) {
-      console.warn('[Agent Orchestrator] Gemini API call failed or rate limited:', err.message);
-      aiGeneratedData = null;
+      console.warn('[Agent Orchestrator Notice] Gemini API timeout or error:', err.message);
+      console.log('[Agent Orchestrator] Utilizing SprintFlow High-Fidelity Local AI Reasoning Engine...');
+      aiGeneratedData = generateSmartFallbackPlan(projectInput);
     }
   }
 
-  // If Gemini API is not set or failed, generate dynamic, high-fidelity local AI reasoning strategy
+  // If Gemini API is not set or failed/timed out, generate dynamic local AI reasoning strategy
   if (!aiGeneratedData) {
     console.log('[Agent Orchestrator] Utilizing SprintFlow High-Fidelity Dynamic Local AI Reasoning Engine...');
     aiGeneratedData = generateSmartFallbackPlan(projectInput);
@@ -233,7 +229,6 @@ function computeDynamicRiskAnalysis(p) {
     if (!isNaN(diffTime) && diffTime > 0) {
       daysUntilDeadline = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
     } else {
-      // If deadline is written as a number string (e.g. "30")
       const parsedNum = parseInt(deadlineStr, 10);
       if (!isNaN(parsedNum)) daysUntilDeadline = parsedNum;
     }
@@ -340,7 +335,7 @@ function computeDynamicRiskAnalysis(p) {
     copilotRecs.push('Reassign overloaded employees and implement cross-training to remove single points of failure.');
   }
 
-  // Fallback risk if project is extremely low risk
+  // Fallback risk if project is low risk
   if (generatedRisks.length === 0) {
     generatedRisks.push({
       id: 'r_opt',
@@ -354,16 +349,11 @@ function computeDynamicRiskAnalysis(p) {
     });
   }
 
-  // Cap final risk score at 100
   const finalRiskScore = Math.min(100, Math.max(10, riskScore));
-
-  // Compute Health Score: 100 - (0.65 * RiskScore)
   let healthScore = 100 - Math.round(finalRiskScore * 0.65);
   if (teamSize >= 5) healthScore += 5;
   if (budget >= budgetThreshold) healthScore += 5;
   const finalHealthScore = Math.min(99, Math.max(15, healthScore));
-
-  // Compute AI Confidence Score: 100 - (0.4 * RiskScore)
   const finalConfidenceScore = Math.min(99, Math.max(45, 100 - Math.round(finalRiskScore * 0.4)));
 
   if (copilotRecs.length === 0) {
